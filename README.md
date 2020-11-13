@@ -6,7 +6,7 @@ A pure JavaScript implementation of FormCore.
 Usage
 -----
 
-Install with `npm i -g formcore-lang`. Type `fmc` to see the available commands.
+Install with `npm i -g formcore-lang`. Type `fmc -h` to see the available commands.
 
 - `fmc file.fmc`: checks all types in `file.fmc`
 

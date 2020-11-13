@@ -46,7 +46,7 @@ function stringify(term) {
 
 function as_adt(term, defs) {
   var term = fmc.reduce(term, defs);
-  if (term.ctor === "All" && term.self.slice(0,5) === "self_") {
+  if (term.ctor === "All" && term.self.slice(-5) === ".Self") {
     var term = term.body(fmc.Var("self",0), fmc.Var("P",0));
     var ctrs = [];
     while (term.ctor === "All") {
@@ -59,7 +59,7 @@ function as_adt(term, defs) {
           while (func.ctor === "App") {
             func = func.func;
           }
-          if (func.ctor === "Var" && func.indx === "P") {
+          if (func.ctor === "Var" && func.name === "P") {
             var argm = term.argm;
             while (argm.ctor === "App") {
               argm = argm.func;
@@ -103,6 +103,10 @@ function dependency_sort(defs, main) {
         go(term.argm);
         break;
       case "Let":
+        go(term.expr);
+        go(term.body(fmc.Var(term.name,0)));
+        break;
+      case "Def":
         go(term.expr);
         go(term.body(fmc.Var(term.name,0)));
         break;
@@ -188,13 +192,15 @@ function infer(term, defs, ctx = fmc.Nil()) {
       };
     case "Let":
       var expr_cmp = infer(term.expr, defs, ctx);
-      var expr_var = fmc.Ann(true, fmc.Var(term.name, ctx.size+1), expr_cmp.type);
+      var expr_var = fmc.Ann(true, fmc.Var("_"+term.name, ctx.size+1), expr_cmp.type);
       var body_ctx = fmc.Ext({name:term.name,type:expr_var.type}, ctx);
       var body_cmp = infer(term.body(expr_var), defs, body_ctx);
       return {
         comp: Let(term.name+"$"+(ctx.size+1), expr_cmp.comp, body_cmp.comp),
         type: body_cmp.type,
       };
+    case "Def":
+      return infer(term.body(term.expr), defs, ctx);
     case "All":
       return {
         comp: Nul(),
@@ -236,14 +242,14 @@ function check(term, type, defs, ctx = fmc.Nil()) {
     case "Lam":
       if (typv.ctor === "All") {
         var self_var = fmc.Ann(true, term, type);
-        var name_var = fmc.Ann(true, fmc.Var(term.name, ctx.size+1), typv.bind);
+        var name_var = fmc.Ann(true, fmc.Var("_"+term.name, ctx.size+1), typv.bind);
         var body_typ = typv.body(self_var, name_var);
         var body_ctx = fmc.Ext({name:term.name,type:name_var.type}, ctx);
         var body_cmp = check(term.body(name_var), body_typ, defs, body_ctx);
         if (typv.eras) {
           comp = body_cmp.comp;
         } else {
-          comp = Lam(term.name+"$"+(ctx.size+1), body_cmp.comp);
+          comp = Lam("_"+term.name+"$"+(ctx.size+1), body_cmp.comp);
         }
         var type_adt = as_adt(type, defs);
         var type_prim = prim_of(type, defs);
@@ -258,11 +264,11 @@ function check(term, type, defs, ctx = fmc.Nil()) {
       return {comp, type};
     case "Let":
       var expr_cmp = infer(term.expr, defs, ctx);
-      var expr_var = fmc.Ann(true, fmc.Var(term.name, ctx.size+1), expr_cmp.type);
+      var expr_var = fmc.Ann(true, fmc.Var("_"+term.name, ctx.size+1), expr_cmp.type);
       var body_ctx = fmc.Ext({name:term.name,type:expr_var.type}, ctx);
       var body_cmp = check(term.body(expr_var), type, defs, body_ctx);
       return {
-        comp: Let(term.name+"$"+(ctx.size+1), expr_cmp.comp, body_cmp.comp),
+        comp: Let("_"+term.name+"$"+(ctx.size+1), expr_cmp.comp, body_cmp.comp),
         type: body_cmp.type,
       };
     case "Loc":
@@ -858,6 +864,20 @@ function recursion(term, name) {
   return null;
 };
 
+function print_str(str) {
+  var out = ""
+  for (var i = 0; i < str.length; i++) {
+    if (str[i] == '\\' || str[i] == '"' | str[i] == "'") {
+      out += '\\' + str[i];
+    } else if (str[i] >= ' ' && str[i] <= `~`) {
+      out += str[i];
+    } else {
+      out += "\\u{" + str.codePointAt(i).toString(16) + "}";
+    }
+  }
+  return out;
+}
+
 function js_code(term, name = null) {
   var rec = recursion(term, name);
   var app = application(term);
@@ -919,7 +939,7 @@ function js_code(term, name = null) {
       case "Chr":
         return term.chrx.codePointAt(0);
       case "Str":
-        return '"'+fmc.print_str(term.strx)+'"';
+        return '"'+print_str(term.strx)+'"';
     };
   };
 };
@@ -932,7 +952,7 @@ function js_name(str) {
   }
 };
 
-function compile(main, defs, opts) {
+function compile_defs(defs, main, opts) {
   opts = opts || {};
 
   //console.log("compiling ", main);
@@ -1240,21 +1260,25 @@ function compile(main, defs, opts) {
   };
 
   if (isio) {
-    code += "  var rdl = require('readline').createInterface({input:process.stdin,output:process.stdout,terminal:false});\n";
-    code += "  var run = (p) => {\n";
+    code += "  var run = (p) => {";
+    code += "    var rdl = require('readline').createInterface({input:process.stdin,output:process.stdout,terminal:false});\n";
+    code += "    return run_io(rdl,p).then((x) => { rdl.close(); return x; });\n";
+    code += "  };";
+    code += "  var run_io = (rdl,p) => {\n";
     code += "    switch (p._) {\n";
     code += "      case 'IO.end': return Promise.resolve(p.value);\n";
     code += "      case 'IO.ask': return new Promise((res, _) => {\n";
     code += "        switch (p.query) {\n";
-    code += "          case 'print': console.log(p.param); run(p.then(1)).then(res); break;\n";
-    code += "          case 'get_line': rdl.question('', (line) => run(p.then(line)).then(res)); break;\n";
-    code += "          case 'get_file': try { run(p.then(require('fs').readFileSync(p.param,'utf8'))).then(res); } catch (e) { console.log('File not found: \"'+p.param+'\"'); process.exit(); }; break;\n";
-    code += "          case 'get_args': run(p.then(process.argv[2]||'')).then(res); break;\n";
+    code += "          case 'print': console.log(p.param); run_io(rdl, p.then(1)).then(res); break;\n";
+    code += "          case 'get_line': rdl.question('', (line) => run_io(rdl, p.then(line)).then(res)); break;\n";
+    code += "          case 'get_file': try { run_io(rdl, p.then(require('fs').readFileSync(p.param,'utf8'))).then(res); } catch (e) { console.log('File not found: \"'+p.param+'\"'); process.exit(); }; break;\n";
+    code += "          case 'get_args': run_io(rdl, p.then(process.argv[2]||'')).then(res); break;\n";
     code += "         }\n";
     code += "      });\n";
     code += "    }\n";
     code += "  };\n";
   }
+
 
   // Builds each top-level definition
   var exps = [];
@@ -1278,7 +1302,8 @@ function compile(main, defs, opts) {
           expr = js_code(comp, name);
         }
       } catch (e) {
-        //console.log(e);
+        console.log(e);
+        process.exit();
         expr = "'ERROR'";
       };
     };
@@ -1312,7 +1337,7 @@ function compile(main, defs, opts) {
   // Builds last line to call exported main
   if (!opts.module && !opts.expression) {
     if (isio) {
-      code += "\nmodule.exports['$main$']().then(() => process.exit());";
+      code += "\nmodule.exports['$main$']();";
     } else {
       code += "\nvar MAIN=module.exports['"+main+"']; try { console.log(JSON.stringify(MAIN,null,2) || '<unprintable>') } catch (e) { console.log(MAIN); };";
     };
@@ -1325,4 +1350,8 @@ function compile(main, defs, opts) {
   return code;
 };
 
-module.exports = {compile};
+function compile(code, name, opts) {
+  return compile_defs(fmc.parse_defs(code), name, opts);
+};
+
+module.exports = {compile, compile_defs};

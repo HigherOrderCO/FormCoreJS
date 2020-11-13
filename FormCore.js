@@ -262,7 +262,7 @@ function parse_defs(code, indx = 0, mode = "defs") {
         return ctx => Str(strx);
       case '+':
         var numb = chr + parse_name();
-        return Nat(BigInt(numb));
+        return ctx => Nat(BigInt(numb));
       default:
         if (is_name(chr)) {
           var name = chr + parse_name();
@@ -292,6 +292,7 @@ function parse_defs(code, indx = 0, mode = "defs") {
       parse_defs();
     }
   };
+  code = code.split("\n").filter(x => x.slice(0,2) !== "//").join("\n");
   var indx = 0;
   if (mode === "defs") {
     var defs = {};
@@ -563,6 +564,8 @@ function typeinfer(term, defs, ctx = Nil()) {
       var body_ctx = Ext({name:term.name,type:expr_var.type}, ctx);
       var body_typ = typeinfer(term.body(expr_var), defs, body_ctx);
       return body_typ;
+    case "Def":
+      return typeinfer(term.body(term.expr), defs, ctx);;
     case "All":
       var self_var = Ann(true, Var(term.self, ctx.size), term);
       var name_var = Ann(true, Var(term.name, ctx.size+1), term.bind);
