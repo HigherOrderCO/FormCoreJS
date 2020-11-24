@@ -296,7 +296,7 @@ function core_to_comp(defs, main) {
 var prim_types = {
   Unit: {
     inst: [[0, "1"]],
-    elim: {ctag: x => 'unit', ctor: [[]]},
+    elim: {ctag: x => '"unit"', ctor: [[]]},
     cnam: ['unit'],
   },
   Bool: {
