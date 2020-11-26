@@ -310,7 +310,7 @@ var prim_types = {
     cnam: ['zero', 'succ'],
   },
   Bits: {
-    inst: [[0, "''"], [1, p=>p+"+'o'"], [1, p=>p+"+'i'"]],
+    inst: [[0, "''"], [1, p=>p+"+'0'"], [1, p=>p+"+'1'"]],
     elim: {
       ctag: x => x+".length===0?'e':"+x+"["+x+".length-1]==='0'?'o':'i'",
       ctor: [[], [x => x+".slice(0,-1)"], [x => x+".slice(0,-1)"]],
