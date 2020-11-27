@@ -1,3 +1,4 @@
+var K = 0;
 var fmc = require("./FormCore.js");
 
 const Var = (name)           => ({ctor:"Var",name});
@@ -25,6 +26,241 @@ var is_prim = {
   F64      : 1,
   String   : 1,
   Buffer32 : 1,
+};
+
+var prim_types = {
+  Unit: {
+    inst: [[0, "1"]],
+    elim: {ctag: x => '"unit"', ctor: [[]]},
+    cnam: {mode: "switch", nams: ['unit']},
+  },
+  Bool: {
+    inst: [[0, "true"], [0, "false"]],
+    elim: {ctag: x => x, ctor: [[], []]},
+    cnam: {mode: "if"},
+  },
+  Nat: {
+    inst: [[0, "0n"], [1, p => "1n+"+p]],
+    elim: {
+      ctag: x => x+"===0n",
+      ctor: [[], [x => "("+x+"-1n)"]],
+    },
+    cnam: {mode: "if"},
+  },
+  Bits: {
+    inst: [[0, "''"], [1, p=>p+"+'0'"], [1, p=>p+"+'1'"]],
+    elim: {
+      ctag: x => x+".length===0?'e':"+x+"["+x+".length-1]==='0'?'o':'i'",
+      ctor: [[], [x => x+".slice(0,-1)"], [x => x+".slice(0,-1)"]],
+    },
+    cnam: {mode: "switch", nams: ['e', 'o', 'i']},
+  },
+  U8: {
+    inst: [[1, x => "word_to_u8("+x+")"]],
+    elim: {
+      ctag: x => "'u8'",
+      ctor: [[x => "u8_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['u8']},
+  },
+  U16: {
+    inst: [[1, x => "word_to_u16("+x+")"]],
+    elim: {
+      ctag: x => "'u16'",
+      ctor: [[x => "u16_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['u16']},
+  },
+  U32: {
+    inst: [[1, x => "word_to_u32("+x+")"]],
+    elim: {
+      ctag: x => "'u32'",
+      ctor: [[x => "u32_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['u32']},
+  },
+  U64: {
+    inst: [[1, x => "word_to_u64("+x+")"]],
+    elim: {
+      ctag: x => "'u64'",
+      ctor: [[x => "u64_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['u64']},
+  },
+  U256: {
+    inst: [[1, x => "word_to_u256("+x+")"]],
+    elim: {
+      ctag: x => "'u256'",
+      ctor: [[x => "u256_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['u256']},
+  },
+  F64: {
+    inst: [[1, x => "word_to_f64("+x+")"]],
+    elim: {
+      ctag: x => "'f64'",
+      ctor: [[x => "f64_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['f64']},
+  },
+  String: {
+    inst: [[0,"''"], [2, h => t => "(String.fromCharCode("+h+")+"+t+")"]],
+    elim: {
+      ctag: x => x+".length===0",
+      ctor: [[], [x => x+".charCodeAt(0)", x => x+".slice(1)"]],
+    },
+    cnam: {mode: "if"},
+  },
+  Buffer32: {
+    inst: [[2, d => a => "u32array_to_buffer32("+a+")"]],
+    elim: {
+      ctag: x => "'b32'",
+      ctor: [[x => "buffer32_to_depth("+x+")", x => "buffer32_to_u32array("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['b32']},
+  },
+};
+
+var prim_funcs = {
+  "Bool.not"         : [1, a=>`!${a}`],
+  "Bool.and"         : [2, a=>b=>`${a}&&${b}`],
+  "Bool.if"          : [3, a=>b=>c=>`${a}?${b}:${c}`],
+  "Bool.or"          : [2, a=>b=>`${a}||${b}`],
+  "Bits.o"           : [1, a=>`${a}+'0'`],
+  "Bits.i"           : [1, a=>`${a}+'1'`],
+  "Bits.concat"      : [2, a=>b=>`${b}+${a}`],
+  "Bits.eql"         : [2, a=>b=>`${b}===${a}`],
+  "Debug.log"        : [2, a=>b=>`(console.log(${a}),${b}())`],
+  "Nat.add"          : [2, a=>b=>`${a}+${b}`],
+  "Nat.sub"          : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
+  "Nat.mul"          : [2, a=>b=>`${a}*${b}`],
+  "Nat.div"          : [2, a=>b=>`${a}/${b}`],
+  "Nat.div_mod"      : [2, a=>b=>`({_:'Pair.new','fst':${a}/${b},'snd':${a}%${b}})`], // TODO change to proper pair
+  "Nat.pow"          : [2, a=>b=>`${a}**${b}`],
+  "Nat.ltn"          : [2, a=>b=>`${a}<${b}`],
+  "Nat.lte"          : [2, a=>b=>`${a}<=${b}`],
+  "Nat.eql"          : [2, a=>b=>`${a}===${b}`],
+  "Nat.gte"          : [2, a=>b=>`${a}>=${b}`],
+  "Nat.gtn"          : [2, a=>b=>`${a}>${b}`],
+  "Nat.to_u8"        : [1, a=>`Number(${a})`],
+  "Nat.to_u16"       : [1, a=>`Number(${a})`],
+  "Nat.to_u32"       : [1, a=>`Number(${a})`],
+  "Nat.to_u64"       : [1, a=>`${a}`],
+  "Nat.to_u256"      : [1, a=>`${a}`],
+  "Nat.to_f64"       : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
+  "Nat.to_bits"      : [1, a=>`nat_to_bits(${a})`],
+  "U8.add"           : [2, a=>b=>`(${a}+${b})&0xFF`],
+  "U8.sub"           : [2, a=>b=>`Math.max(${a}-${b},0)`],
+  "U8.mul"           : [2, a=>b=>`(${a}*${b})&0xFF`],
+  "U8.div"           : [2, a=>b=>`(${a}/${b})>>>0`],
+  "U8.mod"           : [2, a=>b=>`${a}%${b}`],
+  "U8.pow"           : [2, a=>b=>`(${a}**${b})&0xFF`],
+  "U8.ltn"           : [2, a=>b=>`${a}<${b}`],
+  "U8.lte"           : [2, a=>b=>`${a}<=${b}`],
+  "U8.eql"           : [2, a=>b=>`${a}===${b}`],
+  "U8.gte"           : [2, a=>b=>`${a}>=${b}`],
+  "U8.gtn"           : [2, a=>b=>`${a}>${b}`],
+  "U8.shr"           : [2, a=>b=>`${a}>>>${b}`],
+  "U8.shl"           : [2, a=>b=>`(${a}<<${b})*0xFF`],
+  "U8.and"           : [2, a=>b=>`${a}&${b}`],
+  "U8.or"            : [2, a=>b=>`${a}|${b}`],
+  "U8.xor"           : [2, a=>b=>`${a}^${b}`],
+  "U16.add"          : [2, a=>b=>`(${a}+${b})&0xFFFF`],
+  "U16.sub"          : [2, a=>b=>`Math.max(${a}-${b},0)`],
+  "U16.mul"          : [2, a=>b=>`(${a}*${b})&0xFFFF`],
+  "U16.div"          : [2, a=>b=>`(${a}/${b})>>>0`],
+  "U16.mod"          : [2, a=>b=>`${a}%${b}`],
+  "U16.pow"          : [2, a=>b=>`(${a}**${b})&0xFFFF`],
+  "U16.ltn"          : [2, a=>b=>`${a}<${b}`],
+  "U16.lte"          : [2, a=>b=>`${a}<=${b}`],
+  "U16.eql"          : [2, a=>b=>`${a}===${b}`],
+  "U16.gte"          : [2, a=>b=>`${a}>=${b}`],
+  "U16.gtn"          : [2, a=>b=>`${a}>${b}`],
+  "U16.shr"          : [2, a=>b=>`${a}>>>${b}`],
+  "U16.shl"          : [2, a=>b=>`(${a}<<${b})&0xFFFF`],
+  "U16.and"          : [2, a=>b=>`${a}&${b}`],
+  "U16.or"           : [2, a=>b=>`${a}|${b}`],
+  "U16.xor"          : [2, a=>b=>`${a}^${b}`],
+  "U16.to_bits"      : [1, a=>`u16_to_bits(${a})`],
+  "U32.add"          : [2, a=>b=>`(${a}+${b})>>>0`],
+  "U32.sub"          : [2, a=>b=>`Math.max(${a}-${b},0)`],
+  "U32.mul"          : [2, a=>b=>`(${a}*${b})>>>0`],
+  "U32.div"          : [2, a=>b=>`(${a}/${b})>>>0`],
+  "U32.mod"          : [2, a=>b=>`${a}%${b}`],
+  "U32.pow"          : [2, a=>b=>`(${a}**${b})>>>0`],
+  "U32.ltn"          : [2, a=>b=>`${a}<${b}`],
+  "U32.lte"          : [2, a=>b=>`${a}<=${b}`],
+  "U32.eql"          : [2, a=>b=>`${a}===${b}`],
+  "U32.gte"          : [2, a=>b=>`${a}>=${b}`],
+  "U32.gtn"          : [2, a=>b=>`${a}>${b}`],
+  "U32.shr"          : [2, a=>b=>`${a}>>>${b}`],
+  "U32.shl"          : [2, a=>b=>`${a}<<${b}`],
+  "U32.and"          : [2, a=>b=>`${a}&${b}`],
+  "U32.or"           : [2, a=>b=>`${a}|${b}`],
+  "U32.xor"          : [2, a=>b=>`${a}^${b}`],
+  "U32.slice"        : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
+  "U32.read_base"    : [2, a=>b=>`parseInt(${b},${a})`],
+  "U32.length"       : [1, a=>`${a}.length`],
+  "U32.for"          : [4, a=>b=>c=>d=>`u32_for(${a},${b},${c},${d})`],
+  "U32.to_f64"       : [1, a=>`${a}`],
+  "U64.add"          : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
+  "U64.sub"          : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
+  "U64.mul"          : [2, a=>b=>`(${a}*${b})&0xFFFFFFFFFFFFFFFFn`],
+  "U64.div"          : [2, a=>b=>`${a}/${b}`],
+  "U64.mod"          : [2, a=>b=>`${a}%${b}`],
+  "U64.pow"          : [2, a=>b=>`(${a}**${b})&0xFFFFFFFFFFFFFFFFn`],
+  "U64.ltn"          : [2, a=>b=>`(${a}<${b})`],
+  "U64.lte"          : [2, a=>b=>`(${a}<=${b})`],
+  "U64.eql"          : [2, a=>b=>`(${a}===${b})`],
+  "U64.gte"          : [2, a=>b=>`(${a}>=${b})`],
+  "U64.gtn"          : [2, a=>b=>`(${a}>${b})`],
+  "U64.shr"          : [2, a=>b=>`(${a}>>${b})&0xFFFFFFFFFFFFFFFFn`],
+  "U64.shl"          : [2, a=>b=>`(${a}<<${b})&0xFFFFFFFFFFFFFFFFn`],
+  "U64.and"          : [2, a=>b=>`${a}&${b}`],
+  "U64.or"           : [2, a=>b=>`${a}|${b}`],
+  "U64.xor"          : [2, a=>b=>`${a}^${b}`],
+  "U256.add"         : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
+  "U256.sub"         : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
+  "U256.mul"         : [2, a=>b=>`(${a}*${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
+  "U256.div"         : [2, a=>b=>`${a}/${b}`],
+  "U256.mod"         : [2, a=>b=>`${a}%${b}`],
+  "F64.add"          : [2, a=>b=>`${a}+${b}`],
+  "F64.sub"          : [2, a=>b=>`${a}-${b}`],
+  "F64.mul"          : [2, a=>b=>`${a}*${b}`],
+  "F64.div"          : [2, a=>b=>`${a}/${b}`],
+  "F64.mod"          : [2, a=>b=>`${a}%${b}`],
+  "F64.pow"          : [2, a=>b=>`${a}**${b}`],
+  "F64.log"          : [1, a=>`Math.log(${a})`],
+  "F64.cos"          : [1, a=>`Math.cos(${a})`],
+  "F64.sin"          : [1, a=>`Math.sin(${a})`],
+  "F64.tan"          : [1, a=>`Math.tan(${a})`],
+  "F64.acos"         : [1, a=>`Math.acos(${a})`],
+  "F64.asin"         : [1, a=>`Math.asin(${a})`],
+  "F64.atan"         : [1, a=>`Math.atan(${a})`],
+  "F64.to_u32"       : [1, a=>`(${a}>>>0)`],
+  "Buffer32.set"     : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
+  "Buffer32.get"     : [2, a=>b=>`(${b}[${a}])`],
+  "Buffer32.alloc"   : [1, a=>`new Uint32Array(2 ** Number(${a}))`],
+  "Image3D.set_col"  : [3, a=>b=>c=>`(${c}.buffer[${a}*2+1]=${b},${c})`],
+  "Image3D.set_pos"  : [3, a=>b=>c=>`(${c}.buffer[${a}*2]=${b},${c})`],
+  "Image3D.set"      : [4, a=>b=>c=>d=>`(${d}.buffer[${a}*2]=${b},${d}.buffer[${a}*2+1]=${c},${d})`],
+  "Image3D.push"     : [3, a=>b=>c=>`(${c}.buffer[${c}.length*2]=${a},${c}.buffer[${c}.length*2+1]=${b},${c}.length++,${c})`],
+  "Image3D.get_pos"  : [2, a=>b=>`(${b}.buffer[${a}*2])`],
+  "Image3D.get_col"  : [2, a=>b=>`(${b}.buffer[${a}*2+1])`],
+  "String.eql"       : [2, a=>b=>`${a}===${b}`],
+  "String.concat"    : [2, a=>b=>`${a}+${b}`],
+  "Equal.cast"       : [1, a=>a],
+  "Pos32.new"        : [3, a=>b=>c=>`(0|${a}|(${b}<<12)|(${c}<<24))`],
+  "Pos32.get_x"      : [1, a=>`(${a}&0xFFF)`],
+  "Pos32.get_y"      : [1, a=>`((${a}>>>12)&0xFFF)`],
+  "Pos32.get_z"      : [1, a=>`(${a}>>>24)`],
+  "Col32.get_a"      : [1, a=>`((${a}>>>24)&0xFF)`],
+  "Col32.get_b"      : [1, a=>`((${a}>>>16)&0xFF)`],
+  "Col32.get_g"      : [1, a=>`((${a}>>>8)&0xFF)`],
+  "Col32.get_r"      : [1, a=>`(${a}&0xFF)`],
+  "Col32.new"        : [4, a=>b=>c=>d=>`(0|${a}|(${b}<<8)|(${c}<<16)|(${d}<<24))`],
+  "Fm.Name.to_bits"  : [1, a=>`fm_name_to_bits(${a})`],
+  "List.for"         : [3, a=>b=>c=>`list_for(${a})(${b})(${c})`],
 };
 
 function stringify(term) {
@@ -196,7 +432,7 @@ function infer(term, defs, ctx = fmc.Nil()) {
       var body_ctx = fmc.Ext({name:term.name,type:expr_var.type}, ctx);
       var body_cmp = infer(term.body(expr_var), defs, body_ctx);
       return {
-        comp: Let(term.name+"$"+(ctx.size+1), expr_cmp.comp, body_cmp.comp),
+        comp: Let("_"+term.name+"$"+(ctx.size+1), expr_cmp.comp, body_cmp.comp),
         type: body_cmp.type,
       };
     case "Def":
@@ -293,96 +529,6 @@ function core_to_comp(defs, main) {
   };
 };
 
-var prim_types = {
-  Unit: {
-    inst: [[0, "1"]],
-    elim: {ctag: x => '"unit"', ctor: [[]]},
-    cnam: ['unit'],
-  },
-  Bool: {
-    inst: [[0, "true"], [0, "false"]],
-    elim: {ctag: x => x+"?'true':'false'", ctor: [[], []]},
-    cnam: ['true', 'false'],
-  },
-  Nat: {
-    inst: [[0, "0n"], [1, p => "1n+"+p]],
-    elim: {ctag: x => x+"===0n?'zero':'succ'", ctor: [[], [x => "("+x+"-1n)"]]},
-    cnam: ['zero', 'succ'],
-  },
-  Bits: {
-    inst: [[0, "''"], [1, p=>p+"+'0'"], [1, p=>p+"+'1'"]],
-    elim: {
-      ctag: x => x+".length===0?'e':"+x+"["+x+".length-1]==='0'?'o':'i'",
-      ctor: [[], [x => x+".slice(0,-1)"], [x => x+".slice(0,-1)"]],
-    },
-    cnam: ['e', 'o', 'i'],
-  },
-  U8: {
-    inst: [[1, x => "word_to_u8("+x+")"]],
-    elim: {
-      ctag: x => "'u8'",
-      ctor: [[x => "u8_to_word("+x+")"]],
-    },
-    cnam: ['u8'],
-  },
-  U16: {
-    inst: [[1, x => "word_to_u16("+x+")"]],
-    elim: {
-      ctag: x => "'u16'",
-      ctor: [[x => "u16_to_word("+x+")"]],
-    },
-    cnam: ['u16'],
-  },
-  U32: {
-    inst: [[1, x => "word_to_u32("+x+")"]],
-    elim: {
-      ctag: x => "'u32'",
-      ctor: [[x => "u32_to_word("+x+")"]],
-    },
-    cnam: ['u32'],
-  },
-  U64: {
-    inst: [[1, x => "word_to_u64("+x+")"]],
-    elim: {
-      ctag: x => "'u64'",
-      ctor: [[x => "u64_to_word("+x+")"]],
-    },
-    cnam: ['u64'],
-  },
-  U256: {
-    inst: [[1, x => "word_to_u256("+x+")"]],
-    elim: {
-      ctag: x => "'u256'",
-      ctor: [[x => "u256_to_word("+x+")"]],
-    },
-    cnam: ['u256'],
-  },
-  F64: {
-    inst: [[1, x => "word_to_f64("+x+")"]],
-    elim: {
-      ctag: x => "'f64'",
-      ctor: [[x => "f64_to_word("+x+")"]],
-    },
-    cnam: ['f64'],
-  },
-  String: {
-    inst: [[0,"''"], [2, h => t => "(String.fromCharCode("+h+")+"+t+")"]],
-    elim: {
-      ctag: x => x+".length===0?'nil':'cons'",
-      ctor: [[], [x => x+".charCodeAt(0)", x => x+".slice(1)"]],
-    },
-    cnam: ['nil', 'cons'],
-  },
-  Buffer32: {
-    inst: [[2, d => a => "u32array_to_buffer32("+a+")"]],
-    elim: {
-      ctag: x => "'b32'",
-      ctor: [[x => "buffer32_to_depth("+x+")", x => "buffer32_to_u32array("+x+")"]],
-    },
-    cnam: ['b32'],
-  },
-};
-
 function adt_type(adt) {
   var inst = [];
   var elim = {
@@ -406,146 +552,8 @@ function adt_type(adt) {
     elim.ctor.push(adt[i].flds.map((n,j) => (x => x+"."+adt[i].flds[j])));
     cnam.push(adt[i].name);
   };
+  var cnam = {mode: "switch", nams: cnam};
   return {inst, elim, cnam};
-};
-
-var prim_funcs = {
-  "Bool.not"         : [1, a=>`!${a}`],
-  "Bool.and"         : [2, a=>b=>`${a}&&${b}`],
-  "Bool.if"          : [3, a=>b=>c=>`${a}?${b}:${c}`],
-  "Bool.or"          : [2, a=>b=>`${a}||${b}`],
-  "Bits.concat"      : [2, a=>b=>`${b}+${a}`],
-  "Bits.eql"         : [2, a=>b=>`${b}===${a}`],
-  "Debug.log"        : [2, a=>b=>`(console.log(${a}),${b}())`],
-  "Nat.add"          : [2, a=>b=>`${a}+${b}`],
-  "Nat.sub"          : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
-  "Nat.mul"          : [2, a=>b=>`${a}*${b}`],
-  "Nat.div"          : [2, a=>b=>`${a}/${b}`],
-  "Nat.div_mod"      : [2, a=>b=>`({_:'Pair.new','fst':${a}/${b},'snd':${a}%${b}})`], // TODO change to proper pair
-  "Nat.pow"          : [2, a=>b=>`${a}**${b}`],
-  "Nat.ltn"          : [2, a=>b=>`${a}<${b}`],
-  "Nat.lte"          : [2, a=>b=>`${a}<=${b}`],
-  "Nat.eql"          : [2, a=>b=>`${a}===${b}`],
-  "Nat.gte"          : [2, a=>b=>`${a}>=${b}`],
-  "Nat.gtn"          : [2, a=>b=>`${a}>${b}`],
-  "Nat.to_u8"        : [1, a=>`Number(${a})`],
-  "Nat.to_u16"       : [1, a=>`Number(${a})`],
-  "Nat.to_u32"       : [1, a=>`Number(${a})`],
-  "Nat.to_u64"       : [1, a=>`${a}`],
-  "Nat.to_u256"      : [1, a=>`${a}`],
-  "Nat.to_f64"       : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
-  "Nat.to_bits"      : [1, a=>`nat_to_bits(${a})`],
-  "U8.add"           : [2, a=>b=>`(${a}+${b})&0xFF`],
-  "U8.sub"           : [2, a=>b=>`Math.max(${a}-${b},0)`],
-  "U8.mul"           : [2, a=>b=>`(${a}*${b})&0xFF`],
-  "U8.div"           : [2, a=>b=>`(${a}/${b})>>>0`],
-  "U8.mod"           : [2, a=>b=>`${a}%${b}`],
-  "U8.pow"           : [2, a=>b=>`(${a}**${b})&0xFF`],
-  "U8.ltn"           : [2, a=>b=>`${a}<${b}`],
-  "U8.lte"           : [2, a=>b=>`${a}<=${b}`],
-  "U8.eql"           : [2, a=>b=>`${a}===${b}`],
-  "U8.gte"           : [2, a=>b=>`${a}>=${b}`],
-  "U8.gtn"           : [2, a=>b=>`${a}>${b}`],
-  "U8.shr"           : [2, a=>b=>`${a}>>>${b}`],
-  "U8.shl"           : [2, a=>b=>`(${a}<<${b})*0xFF`],
-  "U8.and"           : [2, a=>b=>`${a}&${b}`],
-  "U8.or"            : [2, a=>b=>`${a}|${b}`],
-  "U8.xor"           : [2, a=>b=>`${a}^${b}`],
-  "U16.add"          : [2, a=>b=>`(${a}+${b})&0xFFFF`],
-  "U16.sub"          : [2, a=>b=>`Math.max(${a}-${b},0)`],
-  "U16.mul"          : [2, a=>b=>`(${a}*${b})&0xFFFF`],
-  "U16.div"          : [2, a=>b=>`(${a}/${b})>>>0`],
-  "U16.mod"          : [2, a=>b=>`${a}%${b}`],
-  "U16.pow"          : [2, a=>b=>`(${a}**${b})&0xFFFF`],
-  "U16.ltn"          : [2, a=>b=>`${a}<${b}`],
-  "U16.lte"          : [2, a=>b=>`${a}<=${b}`],
-  "U16.eql"          : [2, a=>b=>`${a}===${b}`],
-  "U16.gte"          : [2, a=>b=>`${a}>=${b}`],
-  "U16.gtn"          : [2, a=>b=>`${a}>${b}`],
-  "U16.shr"          : [2, a=>b=>`${a}>>>${b}`],
-  "U16.shl"          : [2, a=>b=>`(${a}<<${b})&0xFFFF`],
-  "U16.and"          : [2, a=>b=>`${a}&${b}`],
-  "U16.or"           : [2, a=>b=>`${a}|${b}`],
-  "U16.xor"          : [2, a=>b=>`${a}^${b}`],
-  "U32.add"          : [2, a=>b=>`(${a}+${b})>>>0`],
-  "U32.sub"          : [2, a=>b=>`Math.max(${a}-${b},0)`],
-  "U32.mul"          : [2, a=>b=>`(${a}*${b})>>>0`],
-  "U32.div"          : [2, a=>b=>`(${a}/${b})>>>0`],
-  "U32.mod"          : [2, a=>b=>`${a}%${b}`],
-  "U32.pow"          : [2, a=>b=>`(${a}**${b})>>>0`],
-  "U32.ltn"          : [2, a=>b=>`${a}<${b}`],
-  "U32.lte"          : [2, a=>b=>`${a}<=${b}`],
-  "U32.eql"          : [2, a=>b=>`${a}===${b}`],
-  "U32.gte"          : [2, a=>b=>`${a}>=${b}`],
-  "U32.gtn"          : [2, a=>b=>`${a}>${b}`],
-  "U32.shr"          : [2, a=>b=>`${a}>>>${b}`],
-  "U32.shl"          : [2, a=>b=>`${a}<<${b}`],
-  "U32.and"          : [2, a=>b=>`${a}&${b}`],
-  "U32.or"           : [2, a=>b=>`${a}|${b}`],
-  "U32.xor"          : [2, a=>b=>`${a}^${b}`],
-  "U32.slice"        : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
-  "U32.read_base"    : [2, a=>b=>`parseInt(${b},${a})`],
-  "U32.length"       : [1, a=>`${a}.length`],
-  "U32.for"          : [4, a=>b=>c=>d=>`u32_for(${a},${b},${c},${d})`],
-  "U32.to_f64"       : [1, a=>`${a}`],
-  "U64.add"          : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.sub"          : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
-  "U64.mul"          : [2, a=>b=>`(${a}*${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.div"          : [2, a=>b=>`${a}/${b}`],
-  "U64.mod"          : [2, a=>b=>`${a}%${b}`],
-  "U64.pow"          : [2, a=>b=>`(${a}**${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.ltn"          : [2, a=>b=>`(${a}<${b})`],
-  "U64.lte"          : [2, a=>b=>`(${a}<=${b})`],
-  "U64.eql"          : [2, a=>b=>`(${a}===${b})`],
-  "U64.gte"          : [2, a=>b=>`(${a}>=${b})`],
-  "U64.gtn"          : [2, a=>b=>`(${a}>${b})`],
-  "U64.shr"          : [2, a=>b=>`(${a}>>${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.shl"          : [2, a=>b=>`(${a}<<${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.and"          : [2, a=>b=>`${a}&${b}`],
-  "U64.or"           : [2, a=>b=>`${a}|${b}`],
-  "U64.xor"          : [2, a=>b=>`${a}^${b}`],
-  "U256.add"         : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.sub"         : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
-  "U256.mul"         : [2, a=>b=>`(${a}*${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.div"         : [2, a=>b=>`${a}/${b}`],
-  "U256.mod"         : [2, a=>b=>`${a}%${b}`],
-  "F64.add"          : [2, a=>b=>`${a}+${b}`],
-  "F64.sub"          : [2, a=>b=>`${a}-${b}`],
-  "F64.mul"          : [2, a=>b=>`${a}*${b}`],
-  "F64.div"          : [2, a=>b=>`${a}/${b}`],
-  "F64.mod"          : [2, a=>b=>`${a}%${b}`],
-  "F64.pow"          : [2, a=>b=>`${a}**${b}`],
-  "F64.log"          : [1, a=>`Math.log(${a})`],
-  "F64.cos"          : [1, a=>`Math.cos(${a})`],
-  "F64.sin"          : [1, a=>`Math.sin(${a})`],
-  "F64.tan"          : [1, a=>`Math.tan(${a})`],
-  "F64.acos"         : [1, a=>`Math.acos(${a})`],
-  "F64.asin"         : [1, a=>`Math.asin(${a})`],
-  "F64.atan"         : [1, a=>`Math.atan(${a})`],
-  "F64.to_u32"       : [1, a=>`(${a}>>>0)`],
-  "Buffer32.set"     : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
-  "Buffer32.get"     : [2, a=>b=>`(${b}[${a}])`],
-  "Buffer32.alloc"   : [1, a=>`new Uint32Array(2 ** Number(${a}))`],
-  "Image3D.set_col"  : [3, a=>b=>c=>`(${c}.buffer[${a}*2+1]=${b},${c})`],
-  "Image3D.set_pos"  : [3, a=>b=>c=>`(${c}.buffer[${a}*2]=${b},${c})`],
-  "Image3D.set"      : [4, a=>b=>c=>d=>`(${d}.buffer[${a}*2]=${b},${d}.buffer[${a}*2+1]=${c},${d})`],
-  "Image3D.push"     : [3, a=>b=>c=>`(${c}.buffer[${c}.length*2]=${a},${c}.buffer[${c}.length*2+1]=${b},${c}.length++,${c})`],
-  "Image3D.get_pos"  : [2, a=>b=>`(${b}.buffer[${a}*2])`],
-  "Image3D.get_col"  : [2, a=>b=>`(${b}.buffer[${a}*2+1])`],
-  "String.eql"       : [2, a=>b=>`${a}===${b}`],
-  "String.concat"    : [2, a=>b=>`${a}+${b}`],
-  "Equal.cast"       : [1, a=>a],
-  "Pos32.new"        : [3, a=>b=>c=>`(0|${a}|(${b}<<12)|(${c}<<24))`],
-  "Pos32.get_x"      : [1, a=>`(${a}&0xFFF)`],
-  "Pos32.get_y"      : [1, a=>`((${a}>>>12)&0xFFF)`],
-  "Pos32.get_z"      : [1, a=>`(${a}>>>24)`],
-  "Col32.get_a"      : [1, a=>`((${a}>>>24)&0xFF)`],
-  "Col32.get_b"      : [1, a=>`((${a}>>>16)&0xFF)`],
-  "Col32.get_g"      : [1, a=>`((${a}>>>8)&0xFF)`],
-  "Col32.get_r"      : [1, a=>`(${a}&0xFF)`],
-  "Col32.new"        : [4, a=>b=>c=>d=>`(0|${a}|(${b}<<8)|(${c}<<16)|(${d}<<24))`],
-  "Fm.Name.to_bits"  : [1, a=>`fm_name_to_bits(${a})`],
-  "List.for"         : [3, a=>b=>c=>`list_for(${a})(${b})(${c})`],
 };
 
 var count = 0;
@@ -567,18 +575,6 @@ function subst(term, name, val) {
   }
 };
   
-// Inlines a list of arguments in lambdas, as much as possible. Example:
-// apply_inline((x) (y) f, [a, b, c, d, e]) = f[x<-a,y<-b](c)(d)(e)
-function apply_inline(term, args) {
-  if (term.ctor === "Lam" && args.length > 0) {
-    return apply_inline(subst(term.body, term.name, args[0]), args.slice(1));
-  } else if (args.length > 0) {
-    return apply_inline(App(term, args[0]), args.slice(1));
-  } else {
-    return term;
-  }
-};
-
 // Builds a lambda by filling a template with args.
 function build_from_template(arity, template, args) {
   var res = "";
@@ -599,7 +595,30 @@ function build_from_template(arity, template, args) {
   return res + bod;
 };
 
-function application(func, allow_empty = false) {
+// Inlines a list of arguments in lambdas, as much as possible. Example:
+// apply_inline((x) (y) f, [a, b, c, d, e]) = f[x<-a,y<-b](c)(d)(e)
+function apply_inline(term, args) {
+  if (term.ctor === "Lam" && args.length > 0) {
+    return apply_inline(subst(term.body, term.name, args[0]), args.slice(1));
+  } else if (args.length > 0) {
+    return apply_inline(App(term, args[0]), args.slice(1));
+  } else {
+    return term;
+  }
+};
+
+function application(func, name, allow_empty = false) {
+  function open_ctor(ctor, expr_name) {
+    var ctor_vars = [];
+    var ctor_open = "";
+    for (var j = 0; j < ctor.length; ++j) {
+      var nam = fresh();
+      ctor_open += "var "+nam+"="+ctor[j](expr_name)+";"
+      ctor_vars.push(Var(nam));
+    };
+    return {ctor_open, ctor_vars};
+  };
+
   var args = [];
   while (func && func.ctor === "App") {
     args.push(func.argm);
@@ -607,18 +626,22 @@ function application(func, allow_empty = false) {
   };
   args.reverse();
 
+  if (!allow_empty && args.length === 0) {
+    return null;
+  }
+
   // Primitive function application
-  if (func && (allow_empty || args.length > 0) && func.ctor === "Ref" && prim_funcs[func.name]) {
+  if (func && func.ctor === "Ref" && prim_funcs[func.name]) {
     if (func.name === "Nat.to_u8" && args.length === 1 && args[0].ctor === "Nat") {
-      return String(Number(args[0].natx));
+      return returner(name, String(Number(args[0].natx)));
     } else if (func.name === "Nat.to_u16" && args.length === 1 && args[0].ctor === "Nat") {
-      return String(Number(args[0].natx));
+      return returner(name, String(Number(args[0].natx)));
     } else if (func.name === "Nat.to_u32" && args.length === 1 && args[0].ctor === "Nat") {
-      return String(Number(args[0].natx));
+      return returner(name, String(Number(args[0].natx)));
     } else if (func.name === "Nat.to_u64" && args.length === 1 && args[0].ctor === "Nat") {
-      return String(args[0].natx)+"n";
+      return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
-      return String(args[0].natx)+"n";
+      return returner(name, String(args[0].natx)+"n");
     } else if ( func.name === "Nat.to_f64"
             && args.length === 3
             && args[0].ctor === "Ref"
@@ -632,33 +655,63 @@ function application(func, allow_empty = false) {
         str = "0" + str;
       }
       var str = str.slice(0, -mag) + "." + str.slice(-mag);
-      return (args[0].name === "Bool.false" ? "-" : "") + str;
+      return returnet(name, (args[0].name === "Bool.false" ? "-" : "") + str);
     } else if (func.name === "U32.for"
             && args.length === 4
             && args[3].ctor === "Lam"
             && args[3].body.ctor === "Lam") {
       var idx = js_name(args[3].name);
       var stt = js_name(args[3].body.name);
-      var fro = "fro"+Math.floor(Math.random()*(2**32));
-      var til = "til"+Math.floor(Math.random()*(2**32));
+      var IDX = fresh();
+      var FRO = fresh();
+      var TIL = fresh();
       var str = "";
       str += "(()=>{";
-      str += "let "+stt+"="+js_code(args[0])+";";
-      str += "let "+fro+"="+js_code(args[1])+";";
-      str += "let "+til+"="+js_code(args[2])+";";
-      str += "for (let "+idx+"="+fro+";"+idx+"<"+til+";++"+idx+") {";
-      str += stt+"="+js_code(args[3].body.body);
+      //str += "let "+stt+"="+js_code(args[0])+";";
+      //str += "let "+fro+"="+js_code(args[1])+";";
+      //str += "let "+til+"="+js_code(args[2])+";";
+      str += js_code(args[0], STT);
+      str += js_code(args[1], FRO);
+      str += js_code(args[2], TIL);
+      str += "let "+stt+"="+STT+";";
+      str += "for (let "+idx+"="+FRO+";"+idx+"<"+TIL+";++"+idx+") {";
+      str += js_code(args[3].body.body, STT);
+      str += stt+"="+STT+";";
       str += "};";
       str += "return "+stt+";";
       str += "})()";
-      return str;
+      return returner(name, str);
+    } else if (func.name === "List.for"
+          && args.length === 3
+          && args[2].ctor === "Lam"
+          && args[2].body.ctor === "Lam") {
+      var val = js_name(args[2].name);
+      var stt = js_name(args[2].body.name);
+      var VAL = fresh();
+      var STT = fresh();
+      var LST = fresh();
+      var str = "";
+      str += "(()=>{";
+      str += js_code(args[1], STT);
+      str += js_code(args[0], LST);
+      str += "let "+stt+"="+STT+";";
+      str += "let "+val+";";
+      str += "while ("+LST+"._==='List.cons') {";
+      str += val+"="+LST+".head;";
+      str += js_code(args[2].body.body, STT);
+      str += stt+"="+STT+";";
+      str += LST+"="+LST+".tail;";
+      str += "}";
+      str += "return "+stt+";";
+      str += "})()";
+      return returner(name, str);
     } else {
       var [arity, template] = prim_funcs[func.name];
-      return build_from_template(arity, template, args);
+      return returner(name, build_from_template(arity, template, args));
     }
 
   // Primitive type elimination
-  } else if (func && (allow_empty || args.length > 0) && func.ctor === "Eli") {
+  } else if (func && func.ctor === "Eli") {
     if (typeof func.prim === "string" && prim_types[func.prim]) {
       var type_info = prim_types[func.prim];
     } else if (typeof func.prim === "object") {
@@ -667,31 +720,70 @@ function application(func, allow_empty = false) {
       return null;
     };
     var {ctag, ctor} = type_info.elim;
-    var cnam = type_info.cnam;
-    var res = "(()=>";
-    for (var i = args.length; i < ctor.length; ++i) {
-      res += ("c"+i)+"=>";
-    };
-    res += "{";
-    res += "var self="+js_code(func.expr)+";";
-    res += "switch("+ctag("self")+"){";
-    for (var i = 0; i < ctor.length; ++i) {
-      res += "case '"+cnam[i]+"':";
-      var fargs = [];
-      for (var j = 0; j < ctor[i].length; ++j) {
-        var nam = fresh();
-        res += "var "+nam+"="+ctor[i][j]("self")+";"
-        fargs.push(Var(nam));
+    var nams = type_info.cnam.nams;
+    var mode = type_info.cnam.mode;
+    var isfn = args.length < ctor.length || !name;
+    var res = "";
+    if (isfn) {
+      res += "(()=>";
+      for (var i = args.length; i < ctor.length; ++i) {
+        res += ("c"+i)+"=>";
       };
-      var ret = apply_inline(args[i] || Var("c"+i), fargs);
-      res += "return "+js_code(ret)+";";
+      res += "{";
     };
-    res += "}})()";
-    for (var i = ctor.length; i < args.length; ++i) {
-      res += "("+js_code(args[i])+")";
-    };
-    return res;
+    res += js_code(func.expr,"self");
+    switch (mode) {
+      case "switch":
+        res += "switch("+ctag("self")+"){";
+        for (var i = 0; i < ctor.length; ++i) {
+          res += "case '"+nams[i]+"':";
+          var {ctor_open, ctor_vars} = open_ctor(ctor[i], "self");  
+          res += ctor_open;
+          var retn = fresh();
+          res += js_code(apply_inline(args[i] || Var("c"+i), ctor_vars), retn);
+          res += isfn ? "return "+retn+";" : "var "+js_name(name)+" = "+retn+";";
+          res += isfn ? "" : "break;";
+        };
+        res += "};";
+        break;
+      case "if":
+        res += "if ("+ctag("self")+") {";
+        var {ctor_open, ctor_vars} = open_ctor(ctor[0], "self");
+        res += ctor_open;
+        var retn = fresh();
+        res += js_code(apply_inline(args[0] || Var("c"+i), ctor_vars),retn);
+        res += isfn ? "return "+retn+";" : "var "+js_name(name)+" = "+retn+";";
+        res += "} else {";
+        var {ctor_open, ctor_vars} = open_ctor(ctor[1], "self");
+        res += ctor_open;
+        var retn = fresh();
+        res += js_code(apply_inline(args[1] || Var("c"+i), ctor_vars),retn);
+        res += isfn ? "return "+retn+";" : "var "+js_name(name)+" = "+retn+";";
+        res += "};";
+        break;
+    }
+    if (isfn) {
+      res += "})()";
+      for (var i = ctor.length; i < args.length; ++i) {
+        res += "("+js_code(args[i])+")";
+      };
+      return returner(name, res);
+    } else {
+      if (ctor.length < args.length) {
+        res += "var "+js_name(name)+" = "+js_name(name);
+        for (var i = ctor.length; i < args.length; ++i) {
+          res += "("+js_code(args[i])+")";
+        };
+        res += ";";
+      };
+      return res;
+    }
+
+  // Saturated function application (optimization that bypasses currying)
+  } else if (func && func.ctor === "Ref" && ARITY_OF[func.name] === args.length) {
+    return returner(name, js_code(func)+"$("+args.map(x => js_code(x)).join(",")+")");
   }
+
   return null;
 };
 
@@ -755,15 +847,17 @@ function instantiator(inst) {
   return res;
 };
 
-function flatten_lets(term) {
-  var res = "(()=>{";
-  while (term.ctor === "Let") {
-    res += "var "+js_name(term.name)+"="+js_code(term.expr)+";";
-    term = term.body;
-  };
-  res += "return "+js_code(term)+"})()";
-  return res;
-};
+//tojs (let x = 1; let y = 2; let z = 3; add(x,y,z))
+
+//function flatten_lets(term) {
+  //var res = "(()=>{";
+  //while (term.ctor === "Let") {
+    //res += "var "+js_name(term.name)+"="+js_code(term.expr)+";";
+    //term = term.body;
+  //};
+  //res += "return "+js_code(term)+"})()";
+  //return res;
+//};
 
 // Checks if a function is recursive and tail-safe.
 function recursion(term, name) {
@@ -879,68 +973,114 @@ function print_str(str) {
   return out;
 }
 
-function js_code(term, name = null) {
-  var rec = recursion(term, name);
-  var app = application(term);
+// Returns either an expression or a local assignment
+function returner(name, expr) {
+  if (name) {
+    return "var "+js_name(name)+" = "+expr+";";
+  } else {
+    return expr;
+  }
+};
+
+function js_code(term, name, top_name = null) {
+  var app = application(term, name);
   var ins = instantiation(term);
-  if (rec && rec.tail) {
-    var vars = [];
-    var code = "";
-    while (term.ctor === "Lam") {
-      vars.push(term.name);
-      code = code + js_name(term.name)+"=>";
-      term = term.body;
+  if (top_name && term.ctor === "Lam") {
+    var rec = recursion(term, top_name);
+    if (rec && rec.tail) {
+      var vars = [];
+      var expr = "function "+js_name(top_name)+"$(";
+      var init = true;
+      while (term.ctor === "Lam") {
+        vars.push(term.name);
+        expr = expr + (init?"":",") + js_name(term.name);
+        term = term.body;
+        init = false;
+      }
+      expr += "){";
+      expr += "var "+js_name(top_name)+"$=("+vars.map(js_name).join(",")+")=>({ctr:'TCO',arg:["+vars.map(js_name).join(",")+"]});";
+      expr += "var "+js_name(top_name)+"="+vars.map(v => js_name(v)+"=>").join("")+js_name(top_name)+"$("+vars.map(js_name).join(",")+");";
+      expr += "var arg=["+vars.map(js_name).join(",")+"];";
+      expr += "while(true){";
+      expr += "let ["+vars.map(js_name).join(",")+"]=arg;";
+      expr += "var R="+js_code(term)+";";
+      expr += "if(R.ctr==='TCO')arg=R.arg;";
+      expr += "else return R;";
+      expr += "}}";
+      return returner(name, expr);
+    } else {
+      var expr = "function "+js_name(top_name)+"$(";
+      var init = true;
+      while (term.ctor === "Lam") {
+        expr += (init?"":",") + js_name(term.name);
+        term = term.body;
+        init = false;
+      }
+      var retn = fresh();
+      expr += "){";
+      expr += js_code(term, retn);
+      expr += "return "+retn+";";
+      expr += "}";
+      return returner(name, expr);
     }
-    code += "{";
-    code += "var "+js_name(name)+"=";
-    code += vars.map(v => js_name(v)+"=>").join("");
-    code += "({ctr:'TCO',arg:["+vars.map(js_name).join(",")+"]});";
-    code += "var arg=["+vars.map(js_name).join(",")+"];";
-    code += "while(true){";
-    code += "let ["+vars.map(js_name).join(",")+"]=arg;";
-    code += "var R="+js_code(term)+";";
-    code += "if(R.ctr==='TCO')arg=R.arg;";
-    code += "else return R;";
-    code += "}}";
-    return code;
   } else if (app) {
     return app;
   } else if (ins) {
-    return ins;
+    return returner(name, ins);
   } else if (typeof term === "string") {
-    return term;
+    return returner(name, term);
   } else {
     switch (term.ctor) {
       case "Var":
-        return js_name(term.name);
+        return returner(name, js_name(term.name));
       case "Ref":
-        return js_name(term.name);
+        return returner(name, js_name(term.name));
       case "Nul":
-        return "null";
+        return returner(name, "null");
       case "Lam":
-        return "("+js_name(term.name)+"=>"+js_code(term.body)+")";
+        var expr = "(";
+        while (term.ctor === "Lam") {
+          expr += js_name(term.name) + "=>";
+          term = term.body;
+        }
+        var retn = fresh();
+        expr += "{";
+        expr += js_code(term, retn);
+        expr += "return "+retn+";";
+        expr += "})";
+        return returner(name, expr);
       case "App":
-        return js_code(term.func)+"("+js_code(term.argm)+")";
+        return returner(name, js_code(term.func)+"("+js_code(term.argm)+")");
       case "Let":
-        return flatten_lets(term);
+        if (name) {
+          return js_code(term.expr, term.name)
+               + js_code(term.body, name);
+        } else {
+          var expr = "(()=>{";
+          var retn = fresh();
+          expr += js_code(term, retn);
+          expr += "return "+retn+";";
+          expr += "})()";
+          return expr;
+        }
       case "Eli":
         if (typeof term.prim === "string") {
-          return "elim_"+term.prim.toLowerCase()+"("+js_code(term.expr)+")";
+          return returner(name, "elim_"+term.prim.toLowerCase()+"("+js_code(term.expr)+")");
         } else {
-          return "null";
+          return returner(name, "null");
         }
       case "Ins":
         if (typeof term.prim === "string") {
-          return "inst_"+term.prim.toLowerCase()+"("+js_code(term.expr)+")";
+          return returner(name, "inst_"+term.prim.toLowerCase()+"("+js_code(term.expr)+")");
         } else {
-          return "null";
+          return returner(name, "null");
         }
       case "Nat":
-        return term.natx+"n";
+        return returner(name, term.natx+"n");
       case "Chr":
-        return term.chrx.codePointAt(0);
+        return returner(name, term.chrx.codePointAt(0));
       case "Str":
-        return '"'+print_str(term.strx)+'"';
+        return returner(name, '"'+print_str(term.strx)+'"');
     };
   };
 };
@@ -953,6 +1093,8 @@ function js_name(str) {
   }
 };
 
+// TODO: pass this around instead of making a global object (: I'm tired, ok?
+var ARITY_OF = {};
 function compile_defs(defs, main, opts) {
   opts = opts || {};
 
@@ -972,48 +1114,83 @@ function compile_defs(defs, main, opts) {
   var isio = fmc.equal(defs[main].type, fmc.App(fmc.Ref("IO"), fmc.Ref("Unit")), defs);
   var code = "";
 
-  if (opts.profile) {
-    code += [
-      "var DEPTH = 0;",
-      "var STATS = {};",
-      "function CALL(name, func) {",
-      "  var init = Date.now();",
-      "  ++DEPTH;",
-      "  var done = func();",
-      "  --DEPTH;",
-      "  var stop = Date.now();",
-      "  STATS[name] = STATS[name] || {calls: 0, etime: 0};",
-      "  STATS[name].etime += (stop - init) / 1000;",
-      "  STATS[name].calls += 1;",
-      "  return done;",
-      "};",
-      "function FN(name, arity, func) {",
-      "  switch (arity) {",
-      "    case 0: return func;",
-      "    case 1: return a => CALL(name, () => func(a));",
-      "    case 2: return a => b => CALL(name, () => func(a)(b));",
-      "    case 3: return a => b => c => CALL(name, () => func(a)(b)(c));",
-      "    case 4: return a => b => c => d => CALL(name, () => func(a)(b)(c)(d));",
-      "    case 5: return a => b => c => d => e => CALL(name, () => func(a)(b)(c)(d)(e));",
-      "    case 6: return a => b => c => d => e => f => CALL(name, () => func(a)(b)(c)(d)(e)(f));",
-      "    case 7: return a => b => c => d => e => f => g => CALL(name, () => func(a)(b)(c)(d)(e)(f)(g));",
-      "    case 8: return a => b => c => d => e => f => g => h => CALL(name, () => func(a)(b)(c)(d)(e)(f)(g)(h));",
-      "    default: return func;",
-      "  }",
-      "}",
-      "function SHOW_STATS() {",
-      "  var arr = [];",
-      "  for (var name in STATS) {",
-      "    arr.push({name, ...STATS[name]});",
-      "  }",
-      "  arr.sort((a,b) => a.etime - b.etime);",
-      "  for (var {name,calls,etime} of arr) {",
-      "    console.log(name, calls, etime);",
-      "  }",
-      "}",
-      "",
-    ].join("\n");
-  }
+  //if (opts.profile) {
+    //code += [
+      //"var DEPTH = 0;",
+      //"var STATS = {};",
+      //"function CALL(name, func) {",
+      //"  var init = Date.now();",
+      //"  ++DEPTH;",
+      //"  var done = func();",
+      //"  --DEPTH;",
+      //"  var stop = Date.now();",
+      //"  STATS[name] = STATS[name] || {calls: 0, etime: 0};",
+      //"  STATS[name].etime += (stop - init) / 1000;",
+      //"  STATS[name].calls += 1;",
+      //"  return done;",
+      //"};",
+      //"function FN(name, arity, func) {",
+      //"  switch (arity) {",
+      //"    case 0: return func;",
+      //"    case 1: return a => CALL(name, () => func(a));",
+      //"    case 2: return a => b => CALL(name, () => func(a)(b));",
+      //"    case 3: return a => b => c => CALL(name, () => func(a)(b)(c));",
+      //"    case 4: return a => b => c => d => CALL(name, () => func(a)(b)(c)(d));",
+      //"    case 5: return a => b => c => d => e => CALL(name, () => func(a)(b)(c)(d)(e));",
+      //"    case 6: return a => b => c => d => e => f => CALL(name, () => func(a)(b)(c)(d)(e)(f));",
+      //"    case 7: return a => b => c => d => e => f => g => CALL(name, () => func(a)(b)(c)(d)(e)(f)(g));",
+      //"    case 8: return a => b => c => d => e => f => g => h => CALL(name, () => func(a)(b)(c)(d)(e)(f)(g)(h));",
+      //"    default: return func;",
+      //"  }",
+      //"}",
+      //"function SHOW_STATS() {",
+      //"  var arr = [];",
+      //"  for (var name in STATS) {",
+      //"    arr.push({name, ...STATS[name]});",
+      //"  }",
+      //"  arr.sort((a,b) => a.etime - b.etime);",
+      //"  for (var {name,calls,etime} of arr) {",
+      //"    console.log(name, calls, etime);",
+      //"  }",
+      //"}",
+      //"",
+    //].join("\n");
+  //}
+
+  //code += [
+    //"function FN(arity, fn) {",
+    //"  switch (arity) {",
+    //"    case  0: return fn;",
+    //"    case  1: return a=>fn(a);",
+    //"    case  2: return a=>b=>fn(a,b);",
+    //"    case  3: return a=>b=>c=>fn(a,b,c);",
+    //"    case  4: return a=>b=>c=>d=>fn(a,b,c,d);",
+    //"    case  5: return a=>b=>c=>d=>e=>fn(a,b,c,d,e);",
+    //"    case  6: return a=>b=>c=>d=>e=>f=>fn(a,b,c,d,e,f);",
+    //"    case  7: return a=>b=>c=>d=>e=>f=>g=>fn(a,b,c,d,e,f,g);",
+    //"    case  8: return a=>b=>c=>d=>e=>f=>g=>h=>fn(a,b,c,d,e,f,g,h);",
+    //"    case  9: return a=>b=>c=>d=>e=>f=>g=>h=>i=>fn(a,b,c,d,e,f,g,h,i);",
+    //"    case 10: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>fn(a,b,c,d,e,f,g,h,i,j);",
+    //"    case 11: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>fn(a,b,c,d,e,f,g,h,i,j,k);",
+    //"    case 12: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>fn(a,b,c,d,e,f,g,h,i,j,l);",
+    //"    case 13: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>fn(a,b,c,d,e,f,g,h,i,j,l,m);",
+    //"    case 14: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n);",
+    //"    case 15: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o);",
+    //"    case 16: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p);",
+    //"    case 17: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q);",
+    //"    case 18: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r);",
+    //"    case 19: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s);",
+    //"    case 20: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t);",
+    //"    case 21: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u);",
+    //"    case 22: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v);",
+    //"    case 23: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w);",
+    //"    case 24: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>x=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w,x);",
+    //"    case 25: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>x=>y=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w,x,y);",
+    //"    case 26: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>x=>y=>z=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z);",
+    //"    default: throw 'Function arity too big.';",
+    //"  }",
+    //"}",
+  //].join("\n");
 
   if (!opts.expression) {
     code += "module.exports = ";
@@ -1057,6 +1234,14 @@ function compile_defs(defs, main, opts) {
       "      w = {_: (u >>> (16-i-1)) & 1 ? 'Word.i' : 'Word.o', pred: w};",
       "    };",
       "    return w;",
+      "  };",
+      "  function u16_to_bits(x) {",
+      "    var s = '';",
+      "    for (var i = 0; i < 16; ++i) {",
+      "      s = (x & 1 ? '1' : '0') + s;",
+      "      x = x >>> 1;",
+      "    }",
+      "    return s;",
       "  };",
       ].join("\n");
     code += "\n";
@@ -1256,8 +1441,8 @@ function compile_defs(defs, main, opts) {
   };
 
   for (var prim in used_prim_types) {
-    code += "  var inst_"+prim.toLowerCase()+" = "+instantiator(used_prim_types[prim].inst)+";\n";
-    code += "  var elim_"+prim.toLowerCase()+" = "+js_code(Lam("x", application(Eli(prim, Var("x")), true)))+";\n";
+    code += "  const inst_"+prim.toLowerCase()+" = "+instantiator(used_prim_types[prim].inst)+";\n";
+    code += "  const elim_"+prim.toLowerCase()+" = "+js_code(Lam("x", application(Eli(prim, Var("x")), null, true)))+";\n";
   };
 
   if (isio) {
@@ -1280,19 +1465,31 @@ function compile_defs(defs, main, opts) {
     code += "  };\n";
   }
 
+  // Arity analysis
+  ARITY_OF = {};
+  for (var name of nams) {
+    if (cmps[name]) {
+      var arity = 0;
+      var expr = cmps[name];
+      while (expr.ctor === "Lam") {
+        arity += 1;
+        expr = expr.body;
+      }
+      ARITY_OF[name] = arity;
+    }
+  }
 
   // Builds each top-level definition
-  var exps = [];
-  compile_def: for (var name of nams) {
+  var export_names = [];
+  for (var name of nams) {
     // Don't compile primitive types
     if (used_prim_types[name]) {
       continue;
     };
-
     // Generate JS expression
     var expr = null;
     if (used_prim_funcs[name]) {
-      expr = application(Ref(name), true);
+      code += "  const "+js_name(name)+" = "+application(Ref(name), null, true)+";\n";
     } else {
       try {
         var comp = cmps[name];
@@ -1300,7 +1497,21 @@ function compile_defs(defs, main, opts) {
         if (fmc.equal(type, fmc.Typ(), defs)) {
           continue;
         } else {
-          expr = js_code(comp, name);
+          var expr = js_code(comp, null, name);
+          if (expr.slice(0,9) === "function ") {
+            code += expr+";\n";
+            var vars = [];
+            var func = comp;
+            while (func.ctor === "Lam") {
+              vars.push("x"+vars.length);
+              func = func.body;
+            }
+            code += " const "+js_name(name)+" = "
+            code += vars.map(x=>x+"=>").join("");
+            code += js_name(name)+"$("+vars.join(",")+");";
+          } else {
+            code += " const "+js_name(name)+" = "+expr+";\n";
+          }
         }
       } catch (e) {
         console.log(e);
@@ -1308,20 +1519,7 @@ function compile_defs(defs, main, opts) {
         expr = "'ERROR'";
       };
     };
-
-    // Adds to code and register export
-    if (opts.profile) {
-      var arity = 0;
-      var arity_term = comp;
-      while (arity_term.ctor === "Lam") {
-        arity_term = arity_term.body;
-        arity++;
-      }
-      code += "  var "+js_name(name)+" = FN('"+js_name(name)+"', "+arity+", "+expr+");\n";
-    } else {
-      code += "  var "+js_name(name)+" = "+expr+";\n";
-    }
-    exps.push(name);
+    export_names.push(name);
   };
 
   // Builds export list
@@ -1330,7 +1528,7 @@ function compile_defs(defs, main, opts) {
     code += "    '$main$': ()=>run("+js_name(main)+"),\n";
     code += "    'run': run,\n";
   };
-  for (var name of exps) {
+  for (var name of export_names) {
     code += "    '"+name+"': "+js_name(name)+",\n";
   };
   code += "  };\n";
@@ -1345,9 +1543,9 @@ function compile_defs(defs, main, opts) {
     };
   };
 
-  if (opts.profile) {
-    code += "\nSHOW_STATS();";
-  }
+  //if (opts.profile) {
+    //code += "\nSHOW_STATS();";
+  //}
 
   return code;
 };
