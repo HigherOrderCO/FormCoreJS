@@ -337,7 +337,8 @@ function check(term, type, defs, ctx = fmc.Nil()) {
 };
 
 function core_to_comp(defs, main) {
-  var comp_nams = dependency_sort(defs, main).concat([main]);
+  var comp_nams = dependency_sort(defs, main);
+  if (comp_nams.indexOf(main) === -1) comp_nams.push(main);
   var comp_defs = {};
   for (var name of comp_nams) {
     comp_defs[name] = check(defs[name].term, defs[name].type, defs).comp;
