@@ -1,4 +1,3 @@
-var K = 0;
 var fmc = require("./FormCore.js");
 
 const Var = (name)           => ({ctor:"Var",name});
@@ -1114,84 +1113,6 @@ function compile_defs(defs, main, opts) {
   var isio = fmc.equal(defs[main].type, fmc.App(fmc.Ref("IO"), fmc.Ref("Unit")), defs);
   var code = "";
 
-  //if (opts.profile) {
-    //code += [
-      //"var DEPTH = 0;",
-      //"var STATS = {};",
-      //"function CALL(name, func) {",
-      //"  var init = Date.now();",
-      //"  ++DEPTH;",
-      //"  var done = func();",
-      //"  --DEPTH;",
-      //"  var stop = Date.now();",
-      //"  STATS[name] = STATS[name] || {calls: 0, etime: 0};",
-      //"  STATS[name].etime += (stop - init) / 1000;",
-      //"  STATS[name].calls += 1;",
-      //"  return done;",
-      //"};",
-      //"function FN(name, arity, func) {",
-      //"  switch (arity) {",
-      //"    case 0: return func;",
-      //"    case 1: return a => CALL(name, () => func(a));",
-      //"    case 2: return a => b => CALL(name, () => func(a)(b));",
-      //"    case 3: return a => b => c => CALL(name, () => func(a)(b)(c));",
-      //"    case 4: return a => b => c => d => CALL(name, () => func(a)(b)(c)(d));",
-      //"    case 5: return a => b => c => d => e => CALL(name, () => func(a)(b)(c)(d)(e));",
-      //"    case 6: return a => b => c => d => e => f => CALL(name, () => func(a)(b)(c)(d)(e)(f));",
-      //"    case 7: return a => b => c => d => e => f => g => CALL(name, () => func(a)(b)(c)(d)(e)(f)(g));",
-      //"    case 8: return a => b => c => d => e => f => g => h => CALL(name, () => func(a)(b)(c)(d)(e)(f)(g)(h));",
-      //"    default: return func;",
-      //"  }",
-      //"}",
-      //"function SHOW_STATS() {",
-      //"  var arr = [];",
-      //"  for (var name in STATS) {",
-      //"    arr.push({name, ...STATS[name]});",
-      //"  }",
-      //"  arr.sort((a,b) => a.etime - b.etime);",
-      //"  for (var {name,calls,etime} of arr) {",
-      //"    console.log(name, calls, etime);",
-      //"  }",
-      //"}",
-      //"",
-    //].join("\n");
-  //}
-
-  //code += [
-    //"function FN(arity, fn) {",
-    //"  switch (arity) {",
-    //"    case  0: return fn;",
-    //"    case  1: return a=>fn(a);",
-    //"    case  2: return a=>b=>fn(a,b);",
-    //"    case  3: return a=>b=>c=>fn(a,b,c);",
-    //"    case  4: return a=>b=>c=>d=>fn(a,b,c,d);",
-    //"    case  5: return a=>b=>c=>d=>e=>fn(a,b,c,d,e);",
-    //"    case  6: return a=>b=>c=>d=>e=>f=>fn(a,b,c,d,e,f);",
-    //"    case  7: return a=>b=>c=>d=>e=>f=>g=>fn(a,b,c,d,e,f,g);",
-    //"    case  8: return a=>b=>c=>d=>e=>f=>g=>h=>fn(a,b,c,d,e,f,g,h);",
-    //"    case  9: return a=>b=>c=>d=>e=>f=>g=>h=>i=>fn(a,b,c,d,e,f,g,h,i);",
-    //"    case 10: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>fn(a,b,c,d,e,f,g,h,i,j);",
-    //"    case 11: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>fn(a,b,c,d,e,f,g,h,i,j,k);",
-    //"    case 12: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>fn(a,b,c,d,e,f,g,h,i,j,l);",
-    //"    case 13: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>fn(a,b,c,d,e,f,g,h,i,j,l,m);",
-    //"    case 14: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n);",
-    //"    case 15: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o);",
-    //"    case 16: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p);",
-    //"    case 17: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q);",
-    //"    case 18: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r);",
-    //"    case 19: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s);",
-    //"    case 20: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t);",
-    //"    case 21: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u);",
-    //"    case 22: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v);",
-    //"    case 23: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w);",
-    //"    case 24: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>x=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w,x);",
-    //"    case 25: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>x=>y=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w,x,y);",
-    //"    case 26: return a=>b=>c=>d=>e=>f=>g=>h=>i=>j=>k=>l=>m=>n=>o=>p=>q=>r=>s=>t=>u=>v=>w=>x=>y=>z=>fn(a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z);",
-    //"    default: throw 'Function arity too big.';",
-    //"  }",
-    //"}",
-  //].join("\n");
-
   if (!opts.expression) {
     code += "module.exports = ";
   };
@@ -1542,10 +1463,6 @@ function compile_defs(defs, main, opts) {
       code += "\nvar MAIN=module.exports['"+main+"']; try { console.log(JSON.stringify(MAIN,null,2) || '<unprintable>') } catch (e) { console.log(MAIN); };";
     };
   };
-
-  //if (opts.profile) {
-    //code += "\nSHOW_STATS();";
-  //}
 
   return code;
 };
