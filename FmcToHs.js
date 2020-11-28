@@ -657,10 +657,15 @@ function compile_defs(defs, main, opts) {
     if (defs[prim]) used_prim_funcs[prim] = prim_funcs[prim];
   };
 
-  // Builds header and initial dependencies
+  // Is main an IO type?
   var isio = fmc.equal(defs[main].type, fmc.App(fmc.Ref("IO"), fmc.Ref("Unit")), defs);
+
+  // Builds header and initial dependencies
   var code = "";
 
+  if (opts.module) {
+    code += "module "+(opts.module||"Main")+" where\n";
+  }
   code += "import Unsafe.Coerce\n";
   code += "import Data.Word\n";
   code += "import Data.Bits\n";
@@ -724,10 +729,12 @@ function compile_defs(defs, main, opts) {
     export_names.push(name);
   };
 
-  if (isio) {
-    code += "main = run "+js_name(main);
-  } else {
-    code += "main = putStrLn "+js_name(main);
+  if (!opts.module) {
+    if (isio) {
+      code += "main = run "+js_name(main);
+    } else {
+      code += "main = putStrLn "+js_name(main);
+    }
   }
 
   return code;
