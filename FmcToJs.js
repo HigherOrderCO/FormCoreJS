@@ -662,7 +662,7 @@ function application(func, name, allow_empty = false) {
             && args[3].body.ctor === "Lam") {
       var idx = js_name(args[3].name);
       var stt = js_name(args[3].body.name);
-      var IDX = fresh();
+      var STT = fresh();
       var FRO = fresh();
       var TIL = fresh();
       var str = "";
