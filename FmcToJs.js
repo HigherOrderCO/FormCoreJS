@@ -1379,7 +1379,7 @@ function compile_defs(defs, main, opts) {
     code += "        switch (p.query) {\n";
     code += "          case 'print': console.log(p.param); run_io(rdl, p.then(1)).then(res); break;\n";
     code += "          case 'get_line': rdl.question('', (line) => run_io(rdl, p.then(line)).then(res)); break;\n";
-    code += "          case 'get_file': try { run_io(rdl, p.then(require('fs').readFileSync(p.param,'utf8'))).then(res); } catch (e) { console.log('Internal error on the Formality JavaScript runtime.'); process.exit(); }; break;\n";
+    code += "          case 'get_file': try { run_io(rdl, p.then(require('fs').readFileSync(p.param,'utf8'))).then(res); } catch (e) { console.log('Couldn't find file: '+p.param); process.exit(); }; break;\n";
     code += "          case 'get_args': run_io(rdl, p.then(process.argv[2]||'')).then(res); break;\n";
     code += "         }\n";
     code += "      });\n";
