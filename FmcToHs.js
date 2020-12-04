@@ -671,6 +671,7 @@ function compile_defs(defs, main, opts) {
   code += "import Data.Word\n";
   code += "import Data.Bits\n";
   code += "import Debug.Trace\n";
+  code += "import System.Exit\n";
   code += "u = unsafeCoerce\n";
 
   if (isio) {
@@ -678,6 +679,7 @@ function compile_defs(defs, main, opts) {
       'run p = case p of {',
       '  (1,f) -> (u f (\\query param cont-> case query of {',
       '    "print"    -> do { putStrLn param; run (cont ()); };',
+      '    "exit"     -> do { exitFailure; run (cont ()); };',
       '    "get_line" -> do { line <- getLine; run (u cont line); };',
       '    "get_file" -> do { line <- readFile param; run (u cont line); };',
       '    otherwise  -> do { u cont (); };',
