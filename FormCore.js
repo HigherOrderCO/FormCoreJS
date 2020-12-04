@@ -21,15 +21,19 @@ const Nil = ()          => ({ctor:"Nil",size:0});
 const Ext = (head,tail) => ({ctor:"Ext",head,tail,size:tail.size+1});
 
 // Finds first value satisfying `cond` in a list
-function list_find(list, cond, indx = 0) {
+function list_find(list, cond, indx = 0, skip = 0) {
   switch (list.ctor) {
     case "Nil":
       return null;
     case "Ext":
       if (cond(list.head, indx)) {
-        return {value:list.head, index:indx};
+        if (skip === 0) {
+          return {value:list.head, index:indx};
+        } else {
+          return list_find(list.tail, cond, indx + 1, skip - 1);
+        }
       } else {
-        return list_find(list.tail, cond, indx + 1);
+        return list_find(list.tail, cond, indx + 1, skip);
       };
   };
 };
@@ -266,8 +270,14 @@ function parse_defs(code, indx = 0, mode = "defs") {
       default:
         if (is_name(chr)) {
           var name = chr + parse_name();
+          if (code[indx] === "^") {
+            indx++;
+            var brui = Number(parse_name());
+          } else {
+            var brui = 0;
+          }
           return ctx => {
-            var got = list_find(ctx, (x) => x[0] === name);
+            var got = list_find(ctx, (x) => x[0] === name, 0, brui);
             if (got) {
               return got.value[1];
             } else {
