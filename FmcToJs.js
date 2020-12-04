@@ -260,6 +260,7 @@ var prim_funcs = {
   "Col32.new"        : [4, a=>b=>c=>d=>`(0|${a}|(${b}<<8)|(${c}<<16)|(${d}<<24))`],
   "Fm.Name.to_bits"  : [1, a=>`fm_name_to_bits(${a})`],
   "List.for"         : [3, a=>b=>c=>`list_for(${a})(${b})(${c})`],
+  "List.length"      : [1, a=>b=>c=>`list_length(${a})`],
 };
 
 function stringify(term) {
@@ -1321,6 +1322,14 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return nil;",
       "  };",
+      "  var list_length = list => {",
+      "    var len = 0;",
+      "    while (list._ === 'List.cons') {",
+      "      len += 1;",
+      "      list = list.tail;",
+      "    };",
+      "    return BigInt(len);",
+      "  }",
     ].join("\n");
   }
 
