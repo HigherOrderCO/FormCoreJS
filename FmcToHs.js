@@ -680,7 +680,7 @@ function compile_defs(defs, main, opts) {
       '  (1,f) -> (u f (\\query param cont-> case query of {',
       '    "print"    -> do { putStrLn param; run (cont ()); };',
       '    "exit"     -> do { exitFailure; run (cont ()); };',
-      '    "get_line" -> do { line <- getLine; run (u cont line); };',
+      '    "get_line" -> do { line <- getLine; run (u cont line); };', // TODO: not crash when file doesn't exist (:
       '    "get_file" -> do { line <- readFile param; run (u cont line); };',
       '    otherwise  -> do { u cont (); };',
       '  }));',
