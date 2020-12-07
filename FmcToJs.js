@@ -1329,7 +1329,7 @@ function compile_defs(defs, main, opts) {
       "      list = list.tail;",
       "    };",
       "    return BigInt(len);",
-      "  }",
+      "  };",
     ].join("\n");
   }
 
