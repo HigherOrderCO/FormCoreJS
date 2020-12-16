@@ -1377,20 +1377,28 @@ function compile_defs(defs, main, opts) {
   };
 
   if (isio) {
-    code += "  var run = (p) => {";
-    code += "    var rdl = require('readline').createInterface({input:process.stdin,output:process.stdout,terminal:false});\n";
-    code += "    return run_io(rdl,p).then((x) => { rdl.close(); return x; });\n";
-    code += "  };";
-    code += "  var run_io = (rdl,p) => {\n";
+    code += "  var run = (p) => {\n";
+    code += "    if (typeof window === 'undefined') {";
+    code += "      var rl = eval(\"require('readline')\").createInterface({input:process.stdin,output:process.stdout,terminal:false});\n";
+    code += "      var fs = eval(\"require('fs')\");\n";
+    code += "      var pc = eval(\"process\");\n";
+    code += "    } else {\n";
+    code += "      var rl = {question: (x,f) => f(''), close: () => {}};\n";
+    code += "      var fs = {readFileSync: () => ''};\n";
+    code += "      var pc = {exit: () => {}, argv: []};\n";
+    code += "    };\n";
+    code += "    return run_io({rl,fs,pc},p).then((x) => { rl.close(); return x; });\n";
+    code += "  };\n";
+    code += "  var run_io = (lib,p) => {\n";
     code += "    switch (p._) {\n";
     code += "      case 'IO.end': return Promise.resolve(p.value);\n";
     code += "      case 'IO.ask': return new Promise((res, _) => {\n";
     code += "        switch (p.query) {\n";
-    code += "          case 'print': console.log(p.param); run_io(rdl, p.then(1)).then(res); break;\n";
-    code += "          case 'exit': process.exit(); break;\n";
-    code += "          case 'get_line': rdl.question('', (line) => run_io(rdl, p.then(line)).then(res)); break;\n";
-    code += "          case 'get_file': try { run_io(rdl, p.then(require('fs').readFileSync(p.param,'utf8'))).then(res); } catch (e) { run_io(rdl, p.then('')).then(res); }; break;\n";
-    code += "          case 'get_args': run_io(rdl, p.then(process.argv[2]||'')).then(res); break;\n";
+    code += "          case 'print': console.log(p.param); run_io(lib, p.then(1)).then(res); break;\n";
+    code += "          case 'exit': lib.pc.exit(); break;\n";
+    code += "          case 'get_line': lib.rl.question('', (line) => run_io(lib, p.then(line)).then(res)); break;\n";
+    code += "          case 'get_file': try { run_io(lib, p.then(lib.fs.readFileSync(p.param,'utf8'))).then(res); } catch (e) { run_io(lib, p.then('')).then(res); }; break;\n";
+    code += "          case 'get_args': run_io(lib, p.then(lib.pc.argv[2]||'')).then(res); break;\n";
     code += "         }\n";
     code += "      });\n";
     code += "    }\n";
