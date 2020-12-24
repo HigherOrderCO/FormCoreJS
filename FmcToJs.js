@@ -1397,7 +1397,7 @@ function compile_defs(defs, main, opts) {
     code += "          case 'print': console.log(p.param); run_io(lib, p.then(1)).then(res); break;\n";
     code += "          case 'exit': lib.pc.exit(); break;\n";
     code += "          case 'get_line': lib.rl.question('', (line) => run_io(lib, p.then(line)).then(res)); break;\n";
-    code += "          case 'get_file': try { run_io(lib, p.then(lib.fs.readFileSync(p.param,'utf8'))).then(res); } catch (e) { run_io(lib, p.then('')).then(res); }; break;\n";
+    code += "          case 'get_file': try { run_io(lib, p.then(lib.fs.readFileSync(p.param,'utf8'))).then(res); } catch (e) { if (e.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res); } else { throw e; } }; break;\n";
     code += "          case 'get_args': run_io(lib, p.then(lib.pc.argv[2]||'')).then(res); break;\n";
     code += "         }\n";
     code += "      });\n";
