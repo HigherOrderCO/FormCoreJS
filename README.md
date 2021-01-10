@@ -1,7 +1,7 @@
 FormCoreJS
 ==========
 
-A pure JavaScript implementation of FormCore.
+A pure JavaScript implementation of FormCore, a minimal proof language. It is the kernel of the [Formality](https://github.com/moonad/formality) language. It compiles to ultra-fast JavaScript, Haskell. Other back-ends coming soon.
 
 Usage
 -----
