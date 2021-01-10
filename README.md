@@ -6,7 +6,7 @@ A pure JavaScript, dependency-free, 700-LOC implementation of FormCore, a minima
 Usage
 -----
 
-Install with `npm i -g formcore-lang`. Type `fmc -h` to see the available commands.
+Install with `npm i -g formcore-js`. Type `fmc -h` to see the available commands.
 
 - `fmc file.fmc`: checks all types in `file.fmc`
 
@@ -15,7 +15,7 @@ Install with `npm i -g formcore-lang`. Type `fmc -h` to see the available comman
 As a library:
 
 ```
-var {fmc} = require("formcore-lang");
+var {fmc} = require("formcore-js");
 fmc.report(`
   id : @(A: *) @(x: A) A = #A #x x;
 `);
