@@ -83,7 +83,8 @@ Moreover, it will also convert any suitable user-defined self-encoded datatype
 to trees of native objects, using `switch` to pattern-match. It will also swap
 known functions like `Nat.mul` to native `*`, `String.concat` to native `+` and
 so on. It also performs tail-call optimization and inlines certain functions,
-including converting `List.for` to inline loops, for example.
+including converting `List.for` to inline loops, for example. The generated JS
+should be as fast as hand-written code in most cases.
 
 Example
 -------
