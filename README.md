@@ -145,14 +145,14 @@ type Equal <A: Type> (a: A) ~ (b: A) {
 // Boolean negation
 not(b: Bool): Bool
   case b {
-    true: Bool.false,
-    false: Bool.true,
+    true: false,
+    false: true,
   }
 
 // Proof that double negation is identity
 theorem(b: Bool): Equal(Bool, not(not(b)), b)
   case b {
-    true: Equal.refl<Bool, Bool.true>,
-    false: Equal.refl<Bool, Bool.false>,
-  } : Equal(Bool, not(not(b.self)), b.self)
+    true: refl
+    false: refl
+  }!
 ```
