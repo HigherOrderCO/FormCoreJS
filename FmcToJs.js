@@ -913,42 +913,42 @@ function recursion(term, name) {
   };
   var is_recursive = false;
   var is_tail_safe = true;
-  function check(term, tail) {
+  function check(term, tail, arit = 0) {
     //if (DEBUG) console.log("check", tail, stringify(term));
     switch (term.ctor) {
       case "Lam":
-        check(term.body, false);
+        check(term.body, false, 0);
         break;
       case "App":
         var got = tail && get_branches(term);
         if (got) {
-          //if (DEBUG) console.log("- Has branches...");
-          check(got.func, tail && got.branches.length === args.length);
+          //if (DEBUG) console.log("- Has branches...", got.branches.length, args.length);
+          check(got.func, tail && got.branches.length === args.length, arit + 1);
           //if (DEBUG) console.log("~f "+stringify(got.func));
           for (var branch of got.branches) {
             //if (DEBUG) console.log("~b "+stringify(branch));
-            check(branch, tail);
+            check(branch, tail, 0);
           };
         } else {
-          check(term.func, tail);
-          check(term.argm, false);
+          check(term.func, tail, arit + 1);
+          check(term.argm, false, 0);
         };
         break;
       case "Let":
-        check(term.expr, false);
-        check(term.body, tail);
+        check(term.expr, false, 0);
+        check(term.body, tail, arit);
         break;
       case "Eli":
-        check(term.expr, tail);
+        check(term.expr, tail, arit);
         break;
       case "Ins":
-        check(term.expr, tail);
+        check(term.expr, tail, arit);
         break;
       case "Ref":
         if (term.name === name) {
           is_recursive = true;
-          is_tail_safe = is_tail_safe && tail;
-          //if (DEBUG) console.log("- Recurses:", term.name, name, is_recursive, is_tail_safe)
+          is_tail_safe = is_tail_safe && tail && ARITY_OF[name] === arit;
+          //if (DEBUG) console.log("- Recurses:", term.name, name, is_recursive, is_tail_safe, ARITY_OF[name]+"=="+arit)
         };
         break;
     };
