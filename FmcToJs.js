@@ -1322,6 +1322,11 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return nil;",
       "  };",
+    ].join("\n");
+  }
+
+  if (used_prim_funcs["List.length"]) {
+    code += [
       "  var list_length = list => {",
       "    var len = 0;",
       "    while (list._ === 'List.cons') {",
