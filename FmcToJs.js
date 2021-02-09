@@ -1433,6 +1433,7 @@ function compile_defs(defs, main, opts) {
     code += "      case 'IO.ask': return new Promise((res, err) => {\n";
     code += "        switch (p.query) {\n";
     code += "          case 'print': console.log(p.param); run_io(lib, p.then(1)).then(res).catch(err); break;\n";
+    code += "          case 'put': process.stdout.write(p.param); run_io(lib, p.then(1)).then(res).catch(err); break;\n";
     code += "          case 'exit': lib.pc.exit(); break;\n";
     code += "          case 'get_line': lib.rl.question('', (line) => run_io(lib, p.then(line)).then(res).catch(err)); break;\n";
     code += "          case 'get_file': try { run_io(lib, p.then(get_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
