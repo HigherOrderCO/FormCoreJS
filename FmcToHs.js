@@ -697,14 +697,15 @@ function compile_defs(defs, main, opts) {
       '  return $ intercalate \";\" dir',
       'run p = case p of {',
       '  (1,f) -> (u f (\\query param cont-> case query of {',
-      '    "print"    -> do { putStrLn param; run (cont ()); };',
-      '    "exit"     -> do { exitFailure; run (cont ()); };',
-      '    "get_line" -> do { line <- getLine; run (u cont line); };', // TODO: not crash when file doesn't exist (:
-      '    "set_file" -> do { setFile param; run (u cont ""); };',
-      '    "get_file" -> do { line <- readFile param; run (u cont line); };',
-      '    "del_file" -> do { delFile param; run (u cont ""); };',
-      '    "get_dir" -> do { dir <- getDir param; run (u cont dir); };',
-      '    otherwise  -> do { u cont (); };',
+      '    "print"      -> do { putStrLn param; run (cont ()); };',
+      '    "put_string" -> do { putStr param; run (cont ()); };',
+      '    "exit"       -> do { exitFailure; run (cont ()); };',
+      '    "get_line"   -> do { line <- getLine; run (u cont line); };', // TODO: not crash when file doesn't exist (:
+      '    "set_file"   -> do { setFile param; run (u cont ""); };',
+      '    "get_file"   -> do { line <- readFile param; run (u cont line); };',
+      '    "del_file"   -> do { delFile param; run (u cont ""); };',
+      '    "get_dir"    -> do { dir <- getDir param; run (u cont dir); };',
+      '    otherwise    -> do { u cont (); };',
       '  }));',
       '  (0,f) -> (u f (\\value-> do { (return :: a -> IO a) value; }));',
       '}'
