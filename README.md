@@ -1,12 +1,12 @@
 FormCoreJS
 ==========
 
-A pure JavaScript implementation of FormCore.
+A pure JavaScript, dependency-free, 700-LOC implementation of FormCore, a minimal proof language featuring inductive reasoning. It is the kernel of [Formality](https://github.com/moonad/formality). It compiles to ultra-fast JavaScript and Haskell. Other back-ends coming soon.
 
 Usage
 -----
 
-Install with `npm i -g formcore-lang`. Type `fmc -h` to see the available commands.
+Install with `npm i -g formcore-js`. Type `fmc -h` to see the available commands.
 
 - `fmc file.fmc`: checks all types in `file.fmc`
 
@@ -15,7 +15,7 @@ Install with `npm i -g formcore-lang`. Type `fmc -h` to see the available comman
 As a library:
 
 ```
-var {fmc} = require("formcore-lang");
+var {fmc} = require("formcore-js");
 fmc.report(`
   id : @(A: *) @(x: A) A = #A #x x;
 `);
@@ -83,7 +83,8 @@ Moreover, it will also convert any suitable user-defined self-encoded datatype
 to trees of native objects, using `switch` to pattern-match. It will also swap
 known functions like `Nat.mul` to native `*`, `String.concat` to native `+` and
 so on. It also performs tail-call optimization and inlines certain functions,
-including converting `List.for` to inline loops, for example.
+including converting `List.for` to inline loops, for example. The generated JS
+should be as fast as hand-written code in most cases.
 
 Example
 -------
@@ -144,14 +145,14 @@ type Equal <A: Type> (a: A) ~ (b: A) {
 // Boolean negation
 not(b: Bool): Bool
   case b {
-    true: Bool.false,
-    false: Bool.true,
+    true: false,
+    false: true,
   }
 
 // Proof that double negation is identity
 theorem(b: Bool): Equal(Bool, not(not(b)), b)
   case b {
-    true: Equal.refl<Bool, Bool.true>,
-    false: Equal.refl<Bool, Bool.false>,
-  } : Equal(Bool, not(not(b.self)), b.self)
+    true: refl
+    false: refl
+  }!
 ```
