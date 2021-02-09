@@ -261,6 +261,10 @@ var prim_funcs = {
   "Fm.Name.to_bits"  : [1, a=>`fm_name_to_bits(${a})`],
   "List.for"         : [3, a=>b=>c=>`list_for(${a})(${b})(${c})`],
   "List.length"      : [1, a=>`list_length(${a})`],
+  "Set.mut.new"      : [1, a=>`({})`],
+  "Set.mut.set"      : [2, a=>b=>`((k,s)=>((s[k]=true),s))(${a},${b})`],
+  "Set.mut.has"      : [2, a=>b=>`!!(${b}[${a}])`],
+  "Set.mut.del"      : [2, a=>b=>`((k,s)=>((delete s[k]),s))(${a},${b})`],
 };
 
 function stringify(term) {
