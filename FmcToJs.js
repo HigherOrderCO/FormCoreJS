@@ -580,7 +580,39 @@ function subst(term, name, val) {
     default: return term;
   }
 };
-  
+
+function serialize(term) {
+  switch (term.ctor) {
+    case "Var": return "{"+term.name+"}";
+    case "Ref": return "{"+term.name+"}";
+    case "Nul": return "%";
+    case "Lam": return "#"+term.name+" "+serialize(term.body);
+    case "App": return "("+serialize(term.func)+" "+serialize(term.argm)+")";
+    case "Let": return "$"+term.name+"="+serialize(term.expr)+";"+serialize(term.body);
+    case "Eli": return "-"+serialize(term.expr);
+    case "Ins": return "+"+serialize(term.expr);
+    case "Chr": return "'"+term.chrx+"'";
+    case "Str": return '"'+term.strx+'"';
+    case "Nat": return "["+term.natx+"]";
+  }
+};
+
+function is_used(name, term) {
+  switch (term.ctor) {
+    case "Var": return term.name === name;
+    case "Ref": return false;
+    case "Nul": return false;
+    case "Lam": return name === term.name ? false : is_used(name, term.body);
+    case "App": return is_used(name,term.func) || is_used(name,term.argm);
+    case "Let": return is_used(name,term.expr) || (name === term.name ? false : is_used(name,term.body));
+    case "Eli": return is_used(name,term.expr);
+    case "Ins": return is_used(name,term.expr);
+    case "Chr": return false;
+    case "Str": return false;
+    case "Nat": return false;
+  }
+};
+
 // Builds a lambda by filling a template with args.
 function build_from_template(arity, template, args) {
   var res = "";
@@ -614,15 +646,46 @@ function apply_inline(term, args) {
 };
 
 function application(func, name, allow_empty = false) {
-  function open_ctor(ctor, expr_name) {
+  function open_ctor(ctor, expr_name, used_vars = null) {
     var ctor_vars = [];
     var ctor_open = "";
     for (var j = 0; j < ctor.length; ++j) {
-      var nam = fresh();
-      ctor_open += "var "+nam+"="+ctor[j](expr_name)+";"
+      if (!used_vars || used_vars[j]) {
+        var nam = fresh();
+        ctor_open += "var "+nam+"="+ctor[j](expr_name)+";"
+      }
       ctor_vars.push(Var(nam));
     };
     return {ctor_open, ctor_vars};
+  };
+
+  // Used to group cases that don't use variables together (ex: the default case).
+  function get_case_group(i, arity, term) {
+    var vars = [];
+    for (var j = 0; j < arity; ++j) {
+      if (term.ctor !== "Lam") {
+        return String(i);
+      }
+      if (is_used(term.name, term.body)) {
+        return String(i);
+      }
+      vars.push(term.name);
+      term = term.body;
+    }
+    return serialize(term);
+  };
+
+  // Gets the variables used by a case
+  function get_used_vars(arity, term) {
+    var vars = [];
+    for (var j = 0; j < arity; ++j) {
+      if (term.ctor !== "Lam") {
+        return null;
+      }
+      vars.push(is_used(term.name, term.body));
+      term = term.body;
+    }
+    return vars;
   };
 
   var args = [];
@@ -740,13 +803,24 @@ function application(func, name, allow_empty = false) {
     res += js_code(func.expr,"self");
     switch (mode) {
       case "switch":
+        var case_groups = {};
+        for (var i = 0; i < nams.length; ++i) {
+          var group_id = get_case_group(i, ctor[i].length, args[i] || Var("c"+i));
+          case_groups[group_id] = case_groups[group_id] || [];
+          case_groups[group_id].push(i)
+        };
         res += "switch("+ctag("self")+"){";
-        for (var i = 0; i < ctor.length; ++i) {
-          res += "case '"+nams[i]+"':";
-          var {ctor_open, ctor_vars} = open_ctor(ctor[i], "self");  
+        for (var group_id in case_groups) {
+          for (var i of case_groups[group_id]) {
+            res += "case '"+nams[i]+"':";
+          }
+          var i = case_groups[group_id][0];
+          var used_vars = get_used_vars(ctor[i].length, args[i] || Var("c"+i));
+          var {ctor_open, ctor_vars} = open_ctor(ctor[i], "self", used_vars);  
           res += ctor_open;
           var retn = fresh();
-          res += js_code(apply_inline(args[i] || Var("c"+i), ctor_vars), retn);
+          var jsco = js_code(apply_inline(args[i] || Var("c"+i), ctor_vars), retn);
+          res += jsco;
           res += isfn ? "return "+retn+";" : "var "+js_name(name)+" = "+retn+";";
           res += isfn ? "" : "break;";
         };
