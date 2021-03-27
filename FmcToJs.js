@@ -1594,11 +1594,11 @@ function compile_defs(defs, main, opts) {
               vars.push("x"+vars.length);
               func = func.body;
             }
-            code += " const "+js_name(name)+" = "
+            code += "  const "+js_name(name)+" = "
             code += vars.map(x=>x+"=>").join("");
-            code += js_name(name)+"$("+vars.join(",")+");";
+            code += js_name(name)+"$("+vars.join(",")+");\n";
           } else {
-            code += " const "+js_name(name)+" = "+expr+";\n";
+            code += "  const "+js_name(name)+" = "+expr+";\n";
           }
         }
       } catch (e) {
