@@ -1587,7 +1587,7 @@ function compile_defs(defs, main, opts) {
         } else {
           var expr = js_code(comp, null, name);
           if (expr.slice(0,9) === "function ") {
-            code += expr+";\n";
+            code += "  "+expr+";\n";
             var vars = [];
             var func = comp;
             while (func.ctor === "Lam") {
