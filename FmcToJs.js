@@ -1068,7 +1068,7 @@ function js_code(term, name, top_name = null) {
   var ins = instantiation(term);
   if (top_name && term.ctor === "Lam") {
     var rec = recursion(term, top_name);
-    if (rec && (rec.tail || name.slice(-5) === ".loop")) {
+    if (rec && (rec.tail || name && name.slice(-5) === ".loop")) {
       var vars = [];
       var expr = "function "+js_name(top_name)+"$(";
       var init = true;
