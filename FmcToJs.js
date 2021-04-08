@@ -249,6 +249,7 @@ var prim_funcs = {
   "Image3D.get_col"   : [2, a=>b=>`(${b}.buffer[${a}*2+1])`],
   "String.eql"        : [2, a=>b=>`${a}===${b}`],
   "String.concat"     : [2, a=>b=>`${a}+${b}`],
+  "Equal.rewrite"     : [2, a=>b=>b],
   "Equal.cast"        : [1, a=>a],
   "Pos32.new"         : [3, a=>b=>c=>`(0|${a}|(${b}<<12)|(${c}<<24))`],
   "Pos32.get_x"       : [1, a=>`(${a}&0xFFF)`],
