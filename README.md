@@ -75,6 +75,7 @@ Nat       | BigInt
 U8        | Number
 U16       | Number
 U32       | Number
+I32       | Number
 U64       | BigInt
 String    | String
 Bits      | String
