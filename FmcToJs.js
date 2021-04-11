@@ -220,6 +220,7 @@ var prim_funcs = {
   "I32.mul"           : [2, a=>b=>`(${a}*${b})>>0`],
   "I32.div"           : [2, a=>b=>`(${a}/${b})>>0`],
   "I32.mod"           : [2, a=>b=>`${a}%${b}`],
+  "I32.neg"           : [2, a=>`-${a}`],
   "I32.pow"           : [2, a=>b=>`(${a}**${b})>>0`],
   "I32.ltn"           : [2, a=>b=>`${a}<${b}`],
   "I32.lte"           : [2, a=>b=>`${a}<=${b}`],
@@ -746,6 +747,8 @@ function application(func, name, allow_empty = false) {
       return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
+    } else if (func.name === "Nat.to_i32" && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(Number(args[0].natx)));
     } else if ( func.name === "Nat.to_f64"
             && args.length === 3
             && args[0].ctor === "Ref"
