@@ -235,8 +235,8 @@ var prim_funcs = {
   "I32.slice"         : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
   "I32.read_base"     : [2, a=>b=>`parseInt(${b},${a})`],
   "I32.length"        : [1, a=>`${a}.length`],
-  "I32.for"           : [4, a=>b=>c=>d=>`u32_for(${a},${b},${c},${d})`],
-  //"I32.to_f64"        : [1, a=>`${a}`],
+  "I32.for"           : [4, a=>b=>c=>d=>`i32_for(${a},${b},${c},${d})`],
+  "I32.to_f64"        : [1, a=>`${a}`],
 
   "U64.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.sub"           : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
