@@ -20,6 +20,7 @@ var is_prim = {
   U8       : 1,
   U16      : 1,
   U32      : 1,
+  I32      : 1,
   U64      : 1,
   U256     : 1,
   F64      : 1,
@@ -77,6 +78,14 @@ var prim_types = {
       ctor: [[x => "u32_to_word("+x+")"]],
     },
     cnam: {mode: "switch", nams: ['u32']},
+  },
+  I32: {
+    inst: [[1, x => "word_to_i32("+x+")"]],
+    elim: {
+      ctag: x => "'i32'",
+      ctor: [[x => "i32_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['i32']},
   },
   U64: {
     inst: [[1, x => "word_to_u64("+x+")"]],
@@ -145,6 +154,7 @@ var prim_funcs = {
   "Nat.to_u8"         : [1, a=>`Number(${a})`],
   "Nat.to_u16"        : [1, a=>`Number(${a})`],
   "Nat.to_u32"        : [1, a=>`Number(${a})`],
+  "Nat.to_i32"        : [1, a=>`Number(${a})`],
   "Nat.to_u64"        : [1, a=>`${a}`],
   "Nat.to_u256"       : [1, a=>`${a}`],
   "Nat.to_f64"        : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
@@ -161,7 +171,7 @@ var prim_funcs = {
   "U8.gte"            : [2, a=>b=>`${a}>=${b}`],
   "U8.gtn"            : [2, a=>b=>`${a}>${b}`],
   "U8.shr"            : [2, a=>b=>`${a}>>>${b}`],
-  "U8.shl"            : [2, a=>b=>`(${a}<<${b})*0xFF`],
+  "U8.shl"            : [2, a=>b=>`(${a}<<${b})&0xFF`],
   "U8.and"            : [2, a=>b=>`${a}&${b}`],
   "U8.or"             : [2, a=>b=>`${a}|${b}`],
   "U8.xor"            : [2, a=>b=>`${a}^${b}`],
@@ -182,6 +192,7 @@ var prim_funcs = {
   "U16.or"            : [2, a=>b=>`${a}|${b}`],
   "U16.xor"           : [2, a=>b=>`${a}^${b}`],
   "U16.to_bits"       : [1, a=>`u16_to_bits(${a})`],
+
   "U32.add"           : [2, a=>b=>`(${a}+${b})>>>0`],
   "U32.sub"           : [2, a=>b=>`Math.max(${a}-${b},0)`],
   "U32.mul"           : [2, a=>b=>`(${a}*${b})>>>0`],
@@ -194,7 +205,7 @@ var prim_funcs = {
   "U32.gte"           : [2, a=>b=>`${a}>=${b}`],
   "U32.gtn"           : [2, a=>b=>`${a}>${b}`],
   "U32.shr"           : [2, a=>b=>`${a}>>>${b}`],
-  "U32.shl"           : [2, a=>b=>`${a}<<${b}`],
+  "U32.shl"           : [2, a=>b=>`(${a}<<${b})>>>0`],
   "U32.and"           : [2, a=>b=>`${a}&${b}`],
   "U32.or"            : [2, a=>b=>`${a}|${b}`],
   "U32.xor"           : [2, a=>b=>`${a}^${b}`],
@@ -203,6 +214,30 @@ var prim_funcs = {
   "U32.length"        : [1, a=>`${a}.length`],
   "U32.for"           : [4, a=>b=>c=>d=>`u32_for(${a},${b},${c},${d})`],
   "U32.to_f64"        : [1, a=>`${a}`],
+
+  "I32.add"           : [2, a=>b=>`(${a}+${b})>>0`],
+  "I32.sub"           : [2, a=>b=>`(${a}-${b})>>0`],
+  "I32.mul"           : [2, a=>b=>`(${a}*${b})>>0`],
+  "I32.div"           : [2, a=>b=>`(${a}/${b})>>0`],
+  "I32.mod"           : [2, a=>b=>`${a}%${b}`],
+  "I32.neg"           : [2, a=>`-${a}`],
+  "I32.pow"           : [2, a=>b=>`(${a}**${b})>>0`],
+  "I32.ltn"           : [2, a=>b=>`${a}<${b}`],
+  "I32.lte"           : [2, a=>b=>`${a}<=${b}`],
+  "I32.eql"           : [2, a=>b=>`${a}===${b}`],
+  "I32.gte"           : [2, a=>b=>`${a}>=${b}`],
+  "I32.gtn"           : [2, a=>b=>`${a}>${b}`],
+  "I32.shr"           : [2, a=>b=>`${a}>>${b}`],
+  "I32.shl"           : [2, a=>b=>`${a}<<${b}`],
+  "I32.and"           : [2, a=>b=>`${a}&${b}`],
+  "I32.or"            : [2, a=>b=>`${a}|${b}`],
+  "I32.xor"           : [2, a=>b=>`${a}^${b}`],
+  "I32.slice"         : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
+  "I32.read_base"     : [2, a=>b=>`parseInt(${b},${a})`],
+  "I32.length"        : [1, a=>`${a}.length`],
+  "I32.for"           : [4, a=>b=>c=>d=>`i32_for(${a},${b},${c},${d})`],
+  "I32.to_f64"        : [1, a=>`${a}`],
+
   "U64.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.sub"           : [2, a=>b=>`${a}-${b}<=0n?0n:${a}-${b}`],
   "U64.mul"           : [2, a=>b=>`(${a}*${b})&0xFFFFFFFFFFFFFFFFn`],
@@ -249,7 +284,6 @@ var prim_funcs = {
   "Image3D.get_col"   : [2, a=>b=>`(${b}.buffer[${a}*2+1])`],
   "String.eql"        : [2, a=>b=>`${a}===${b}`],
   "String.concat"     : [2, a=>b=>`${a}+${b}`],
-  "Equal.rewrite"     : [2, a=>b=>b],
   "Equal.cast"        : [1, a=>a],
   "Pos32.new"         : [3, a=>b=>c=>`(0|${a}|(${b}<<12)|(${c}<<24))`],
   "Pos32.get_x"       : [1, a=>`(${a}&0xFFF)`],
@@ -713,6 +747,8 @@ function application(func, name, allow_empty = false) {
       return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
+    } else if (func.name === "Nat.to_i32" && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(Number(args[0].natx)));
     } else if ( func.name === "Nat.to_f64"
             && args.length === 3
             && args[0].ctor === "Ref"
@@ -728,6 +764,31 @@ function application(func, name, allow_empty = false) {
       var str = str.slice(0, -mag) + "." + str.slice(-mag);
       return returnet(name, (args[0].name === "Bool.false" ? "-" : "") + str);
     } else if (func.name === "U32.for"
+            && args.length === 4
+            && args[3].ctor === "Lam"
+            && args[3].body.ctor === "Lam") {
+      var idx = js_name(args[3].name);
+      var stt = js_name(args[3].body.name);
+      var STT = fresh();
+      var FRO = fresh();
+      var TIL = fresh();
+      var str = "";
+      str += "(()=>{";
+      //str += "let "+stt+"="+js_code(args[0])+";";
+      //str += "let "+fro+"="+js_code(args[1])+";";
+      //str += "let "+til+"="+js_code(args[2])+";";
+      str += js_code(args[0], STT);
+      str += js_code(args[1], FRO);
+      str += js_code(args[2], TIL);
+      str += "let "+stt+"="+STT+";";
+      str += "for (let "+idx+"="+FRO+";"+idx+"<"+TIL+";++"+idx+") {";
+      str += js_code(args[3].body.body, STT);
+      str += stt+"="+STT+";";
+      str += "};";
+      str += "return "+stt+";";
+      str += "})()";
+      return returner(name, str);
+    } else if (func.name === "I32.for"
             && args.length === 4
             && args[3].ctor === "Lam"
             && args[3].body.ctor === "Lam") {
@@ -1269,6 +1330,33 @@ function compile_defs(defs, main, opts) {
       "    return w;",
       "  };",
       "  function u32_for(state, from, til, func) {",
+      "    for (var i = from; i < til; ++i) {",
+      "      state = func(i)(state);",
+      "    }",
+      "    return state;",
+      "  };"
+      ].join("\n");
+    code += "\n";
+  };
+
+  if (used_prim_types["I32"]) {
+    code += [
+      "  function word_to_i32(w) {",
+      "    var u = 0;",
+      "    for (var i = 0; i < 32; ++i) {",
+      "      u = u | (w._ === 'Word.i' ? 1 << i : 0);",
+      "      w = w.pred;",
+      "    };",
+      "    return u;",
+      "  };",
+      "  function i32_to_word(u) {",
+      "    var w = {_: 'Word.e'};",
+      "    for (var i = 0; i < 32; ++i) {",
+      "      w = {_: (u >> (32-i-1)) & 1 ? 'Word.i' : 'Word.o', pred: w};",
+      "    };",
+      "    return w;",
+      "  };",
+      "  function i32_for(state, from, til, func) {",
       "    for (var i = from; i < til; ++i) {",
       "      state = func(i)(state);",
       "    }",
