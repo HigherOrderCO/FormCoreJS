@@ -1631,7 +1631,7 @@ function compile_defs(defs, main, opts) {
     code += "          case 'put_string': process.stdout.write(p.param); run_io(lib, p.then('')).then(res).catch(err); break;\n";
     code += "          case 'exit': lib.pc.exit(); break;\n";
     code += "          case 'get_time': run_io(lib, p.then(String(Date.now()))).then(res).catch(err); break;\n";
-    code += "          case 'get_line': lib.rl.question('', (line) => run_io(lib, p.then(line)).then(res).catch(err)); break;\n";
+    code += "          case 'get_line': lib.rl.question(p.param, (line) => run_io(lib, p.then(line)).then(res).catch(err)); break;\n";
     code += "          case 'get_file': try { run_io(lib, p.then(get_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'set_file': try { run_io(lib, p.then(set_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'del_file': try { run_io(lib, p.then(del_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
