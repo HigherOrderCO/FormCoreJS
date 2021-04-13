@@ -30,7 +30,7 @@ var is_prim = {
 
 var prim_types = {
   Unit: {
-    inst: [[0, "1"]],
+    inst: [[0, "null"]],
     elim: {ctag: x => '"unit"', ctor: [[]]},
     cnam: {mode: "switch", nams: ['unit']},
   },
