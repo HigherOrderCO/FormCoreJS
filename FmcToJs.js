@@ -31,7 +31,7 @@ var is_prim = {
 
 var prim_types = {
   Unit: {
-    inst: [[0, "1"]],
+    inst: [[0, "null"]],
     elim: {ctag: x => '"unit"', ctor: [[]]},
     cnam: {mode: "switch", nams: ['unit']},
   },
@@ -349,12 +349,12 @@ var prim_funcs = {
   "Buffer32.get"      : [2, a=>b=>`(${b}[${a}])`],
   "Buffer32.alloc"    : [1, a=>`new Uint32Array(2 ** Number(${a}))`],
 
-  "Image3D.set_col"   : [3, a=>b=>c=>`(${c}.buffer[${a}*2+1]=${b},${c})`],
-  "Image3D.set_pos"   : [3, a=>b=>c=>`(${c}.buffer[${a}*2]=${b},${c})`],
-  "Image3D.set"       : [4, a=>b=>c=>d=>`(${d}.buffer[${a}*2]=${b},${d}.buffer[${a}*2+1]=${c},${d})`],
-  "Image3D.push"      : [3, a=>b=>c=>`(${c}.buffer[${c}.length*2]=${a},${c}.buffer[${c}.length*2+1]=${b},${c}.length++,${c})`],
-  "Image3D.get_pos"   : [2, a=>b=>`(${b}.buffer[${a}*2])`],
-  "Image3D.get_col"   : [2, a=>b=>`(${b}.buffer[${a}*2+1])`],
+  "VoxBox.set_col"    : [3, a=>b=>c=>`(${c}.buffer[${a}*2+1]=${b},${c})`],
+  "VoxBox.set_pos"    : [3, a=>b=>c=>`(${c}.buffer[${a}*2]=${b},${c})`],
+  "VoxBox.set"        : [4, a=>b=>c=>d=>`(${d}.buffer[${a}*2]=${b},${d}.buffer[${a}*2+1]=${c},${d})`],
+  "VoxBox.push"       : [3, a=>b=>c=>`(${c}.buffer[${c}.length*2]=${a},${c}.buffer[${c}.length*2+1]=${b},${c}.length++,${c})`],
+  "VoxBox.get_pos"    : [2, a=>b=>`(${b}.buffer[${a}*2])`],
+  "VoxBox.get_col"    : [2, a=>b=>`(${b}.buffer[${a}*2+1])`],
 
   "String.eql"        : [2, a=>b=>`${a}===${b}`],
   "String.concat"     : [2, a=>b=>`${a}+${b}`],
@@ -1705,7 +1705,7 @@ function compile_defs(defs, main, opts) {
     code += "          case 'put_string': process.stdout.write(p.param); run_io(lib, p.then('')).then(res).catch(err); break;\n";
     code += "          case 'exit': lib.pc.exit(); break;\n";
     code += "          case 'get_time': run_io(lib, p.then(String(Date.now()))).then(res).catch(err); break;\n";
-    code += "          case 'get_line': lib.rl.question('', (line) => run_io(lib, p.then(line)).then(res).catch(err)); break;\n";
+    code += "          case 'get_line': lib.rl.question(p.param, (line) => run_io(lib, p.then(line)).then(res).catch(err)); break;\n";
     code += "          case 'get_file': try { run_io(lib, p.then(get_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'set_file': try { run_io(lib, p.then(set_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'del_file': try { run_io(lib, p.then(del_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
