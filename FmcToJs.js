@@ -96,6 +96,14 @@ var prim_types = {
     },
     cnam: {mode: "switch", nams: ['u64']},
   },
+  U128: {
+    inst: [[1, x => "word_to_u128("+x+")"]],
+    elim: {
+      ctag: x => "'u128'",
+      ctor: [[x => "u128_to_word("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['u128']},
+  },
   U256: {
     inst: [[1, x => "word_to_u256("+x+")"]],
     elim: {
@@ -179,7 +187,7 @@ var prim_funcs = {
   "U8.pow"           : [2, a=>b=>`(${a}**${b})&0xFF`],
   "U8.read_base"     : [2, a=>b=>`parseInt(${b},${a})&0xFF`],
   "U8.shl"           : [2, a=>b=>`(${a}<<${b})&0xFF`],
-  "U8.show"          : [1, a=>`${a}+"#8"`
+  "U8.show"          : [1, a=>`${a}+"#8"`],
   "U8.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U8.slice"         : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
   "U8.sqrt"          : [1, a=>`Math.sqrt(${c})&0xFF`],
@@ -204,7 +212,7 @@ var prim_funcs = {
   "U16.pow"           : [2, a=>b=>`(${a}**${b})&0xFFFF`],
   "U16.read_base"     : [2, a=>b=>`parseInt(${b},${a})&0xFFFF`],
   "U16.shl"           : [2, a=>b=>`(${a}<<${b})&0xFFFF`],
-  "U16.show"          : [1, a=>`${a}+"#16"`
+  "U16.show"          : [1, a=>`${a}+"#16"`],
   "U16.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U16.slice"         : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
   "U16.sqrt"          : [1, a=>`Math.sqrt(${c})&0xFFFF`],
@@ -232,7 +240,7 @@ var prim_funcs = {
   "U32.pow"           : [2, a=>b=>`(${a}**${b})>>>0`],
   "U32.read_base"     : [2, a=>b=>`parseInt(${b},${a})`],
   "U32.shl"           : [2, a=>b=>`(${a}<<${b})>>>0`],
-  "U32.show"          : [1, a=>`${a}+"#32"`
+  "U32.show"          : [1, a=>`${a}+"#32"`],
   "U32.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U32.slice"         : [3, a=>b=>c=>`${c}.slice(${a},${b})`],
   "U32.sqrt"          : [1, a=>`Math.sqrt(${c})>>>0`],
@@ -256,7 +264,7 @@ var prim_funcs = {
   "U64.or"            : [2, a=>b=>`${a}|${b}`],
   "U64.pow"           : [2, a=>b=>`(${a}**${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.shl"           : [2, a=>b=>`(${a}<<${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.show"          : [1, a=>`${a}+"#64"`
+  "U64.show"          : [1, a=>`${a}+"#64"`],
   "U64.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U64.sub"           : [2, a=>b=>`(${a}-${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.to_f64"        : [1, a=>`${a}`],
@@ -278,7 +286,7 @@ var prim_funcs = {
   "U256.or"            : [2, a=>b=>`${a}|${b}`],
   "U256.pow"           : [2, a=>b=>`(${a}**${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.shl"           : [2, a=>b=>`(${a}<<${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.show"          : [1, a=>`${a}+"#256"`
+  "U256.show"          : [1, a=>`${a}+"#256"`],
   "U256.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U256.sub"           : [2, a=>b=>`(${a}-${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.to_f64"        : [1, a=>`${a}`],
@@ -300,7 +308,7 @@ var prim_funcs = {
   "U256.or"            : [2, a=>b=>`${a}|${b}`],
   "U256.pow"           : [2, a=>b=>`(${a}**${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.shl"           : [2, a=>b=>`(${a}<<${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.show"          : [1, a=>`${a}+"#256"`
+  "U256.show"          : [1, a=>`${a}+"#256"`],
   "U256.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U256.sub"           : [2, a=>b=>`(${a}-${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.to_f64"        : [1, a=>`${a}`],
@@ -818,6 +826,8 @@ function application(func, name, allow_empty = false) {
     } else if (func.name === "Nat.to_u32" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(Number(args[0].natx)));
     } else if (func.name === "Nat.to_u64" && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx)+"n");
+    } else if (func.name === "Nat.to_u128" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
@@ -1454,6 +1464,27 @@ function compile_defs(defs, main, opts) {
       "    var w = {_: 'Word.e'};",
       "    for (var i = 0n; i < 64n; i += 1n) {",
       "      w = {_: (u >> (64n-i-1n)) & 1n ? 'Word.i' : 'Word.o', pred: w};",
+      "    };",
+      "    return w;",
+      "  };",
+      ].join("\n");
+    code += "\n";
+  };
+
+  if (used_prim_types["U128"]) {
+    code += [
+      "  function word_to_u128(w) {",
+      "    var u = 0n;",
+      "    for (var i = 0n; i < 128n; i += 1n) {",
+      "      u = u | (w._ === 'Word.i' ? 1n << i : 0n);",
+      "      w = w.pred;",
+      "    };",
+      "    return u;",
+      "  };",
+      "  function u128_to_word(u) {",
+      "    var w = {_: 'Word.e'};",
+      "    for (var i = 0n; i < 128n; i += 1n) {",
+      "      w = {_: (u >> (128n-i-1n)) & 1n ? 'Word.i' : 'Word.o', pred: w};",
       "    };",
       "    return w;",
       "  };",
