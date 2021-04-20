@@ -48,6 +48,14 @@ var prim_types = {
     },
     cnam: {mode: "if"},
   },
+  Int: {
+    inst: [[2, pos => neg => pos+"-"+neg]],
+    elim: {
+      ctag: x => '"new"',
+      ctor: [[x => "int_pos("+x+")", x => "int_neg("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['new']},
+  },
   Bits: {
     inst: [[0, "''"], [1, p=>p+"+'0'"], [1, p=>p+"+'1'"]],
     elim: {
@@ -170,6 +178,13 @@ var prim_funcs = {
   "Nat.to_i32"        : [1, a=>`Number(${a})`],
   "Nat.to_f64"        : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
+
+  "Int.new"           : [2, a=>b=>a+"-"+b],
+  "Int.add"           : [2, a=>b=>`${a}+${b}`],
+  "Int.sub"           : [2, a=>b=>`${a}-${b}`],
+  "Int.mul"           : [2, a=>b=>`${a}*${b}`],
+  "Int.div"           : [2, a=>b=>`${a}/${b}`],
+  "Int.pow"           : [2, a=>b=>`${a}**${b}`],
 
   "U8.add"           : [2, a=>b=>`(${a}+${b})&0xFF`],
   "U8.and"           : [2, a=>b=>`${a}&${b}`],
@@ -1347,6 +1362,18 @@ function compile_defs(defs, main, opts) {
     code += "module.exports = ";
   };
   code += "(function (){\n";
+
+  if (used_prim_types["Int"]) {
+    code += [
+      "  function int_pos(i) {",
+      "    return i >= 0n ? i : 0n;",
+      "  };",
+      "  function int_neg(i) {",
+      "    return i < 0n ? -i : 0n;",
+      "  };",
+      ].join("\n");
+    code += "\n";
+  }
 
   if (used_prim_types["U8"]) {
     code += [
