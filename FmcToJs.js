@@ -359,6 +359,7 @@ var prim_funcs = {
   "F64.div"           : [2, a=>b=>`${a}/${b}`],
   "F64.mod"           : [2, a=>b=>`${a}%${b}`],
   "F64.pow"           : [2, a=>b=>`${a}**${b}`],
+  "F64.parse"         : [1, a=>`parseFloat(${a})`],
   "F64.log"           : [1, a=>`Math.log(${a})`],
   "F64.cos"           : [1, a=>`Math.cos(${a})`],
   "F64.sin"           : [1, a=>`Math.sin(${a})`],
@@ -367,6 +368,7 @@ var prim_funcs = {
   "F64.asin"          : [1, a=>`Math.asin(${a})`],
   "F64.atan"          : [1, a=>`Math.atan(${a})`],
   "F64.to_u32"        : [1, a=>`(${a}>>>0)`],
+  "F64.to_i32"        : [1, a=>`(${a}>>0)`],
 
   "Buffer32.set"      : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer32.get"      : [2, a=>b=>`(${b}[${a}])`],
