@@ -1,6 +1,6 @@
 {
   "name": "formcore-js",
-  "version": "0.1.55",
+  "version": "0.1.56",
   "description": "The FormCore minimal proof language",
   "main": "libs.js",
   "scripts": {
