@@ -1727,9 +1727,6 @@ function compile_defs(defs, main, opts) {
     code += "    };\n";
     code += "    return run_io({rl,fs,pc},p).then((x) => { rl.close(); return x; }).catch((e) => { rl.close(); throw e; });\n";
     code += "  };\n";
-    code += "  var get_file = (lib, param) => {\n";
-    code += "    return lib.fs.readFileSync(param, 'utf8');\n";
-    code += "  }\n";
     code += "  var set_file = (lib, param) => {\n";
     code += "    var path = '';\n"
     code += "    for (var i = 0; i < param.length && param[i] !== '='; ++i) {\n";
@@ -1775,8 +1772,8 @@ function compile_defs(defs, main, opts) {
     code += "          case 'get_file': try { run_io(lib, p.then(get_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'set_file': try { run_io(lib, p.then(set_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'del_file': try { run_io(lib, p.then(del_file(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
-    code += "          case 'get_dir': try { run_io(lib, p.then(get_file_mtime(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
-    code += "          case 'get_file_mtime': try { run_io(lib, p.then(get_dir(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
+    code += "          case 'get_dir': try { run_io(lib, p.then(get_dir(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
+    code += "          case 'get_file_mtime': try { run_io(lib, p.then(get_file_mtime(lib,p.param))).then(res).catch(err); } catch (e) { if (e.message.indexOf('NOENT') !== -1) { run_io(lib, p.then('')).then(res).catch(err); } else { err(e); } }; break;\n";
     code += "          case 'get_args': run_io(lib, p.then(lib.pc.argv[2]||'')).then(res).catch(err); break;\n";
     code += "         }\n";
     code += "      });\n";
