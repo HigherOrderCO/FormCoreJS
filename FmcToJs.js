@@ -402,10 +402,10 @@ var prim_funcs = {
   "Set.mut.has"       : [2, a=>b=>`!!(${b}[${a}])`],
   "Set.mut.del"       : [2, a=>b=>`((k,s)=>((delete s[k]),s))(${a},${b})`],
 
-  "BitsMap.set"       : [3, a=>b=>c=>`bitsmap_set(${a},${b},${c},1)`],
+  "BitsMap.set"       : [3, a=>b=>c=>`bitsmap_set(${a},${b},${c},'set')`],
   "BitsMap.get"       : [2, a=>b=>`bitsmap_get(${a},${b})`],
-  "BitsMap.del"       : [2, a=>b=>`bitsmap_set(${a},null,${b},1)`],
-  "BitsMap.ini"       : [3, a=>b=>c=>`bitsmap_ini(${a},${b},${c},0)`],
+  "BitsMap.del"       : [2, a=>b=>`bitsmap_set(${a},null,${b},'del')`],
+  "BitsMap.ini"       : [3, a=>b=>c=>`bitsmap_ini(${a},${b},${c},'ini')`],
 };
 
 function stringify(term) {
@@ -1632,7 +1632,7 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return map._ === 'BitsMap.new' ? maybe_none : map.val;",
       "  }",
-      "  var bitsmap_set = function(bits, val, map, overwrite) {",
+      "  var bitsmap_set = function(bits, val, map, mode) {",
       "    var res = {value: map};",
       "    var key = 'value';",
       "    var obj = res;",
@@ -1648,10 +1648,10 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    var map = obj[key];",
       "    if (map._ === 'BitsMap.new') {",
-      "      var x = val === null ? maybe_none : {_: 'Maybe.some', value: val};",
+      "      var x = mode === 'del' ? maybe_none : {_: 'Maybe.some', value: val};",
       "      obj[key] = {_: 'BitsMap.tie', val: x, lft: bitsmap_new, rgt: bitsmap_new};",
       "    } else {",
-      "      var x = val === null ? maybe_none : overwrite ? {_: 'Maybe.some', value: val} : map.val;",
+      "      var x = mode === 'set' ? {_: 'Maybe.some', value: val} : mode === 'del' ? maybe_none : map.val;",
       "      obj[key] = {_: 'BitsMap.tie', val: x, lft: map.lft, rgt: map.rgt};",
       "    }",
       "    return res.value;",
