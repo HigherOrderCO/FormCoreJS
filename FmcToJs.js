@@ -401,6 +401,11 @@ var prim_funcs = {
   "Set.mut.set"       : [2, a=>b=>`((k,s)=>((s[k]=true),s))(${a},${b})`],
   "Set.mut.has"       : [2, a=>b=>`!!(${b}[${a}])`],
   "Set.mut.del"       : [2, a=>b=>`((k,s)=>((delete s[k]),s))(${a},${b})`],
+
+  "BitsMap.set"       : [3, a=>b=>c=>`bitsmap_set(${a},${b},${c},1)`],
+  "BitsMap.get"       : [2, a=>b=>`bitsmap_get(${a},${b})`],
+  "BitsMap.del"       : [2, a=>b=>`bitsmap_set(${a},null,${b},1)`],
+  "BitsMap.ini"       : [3, a=>b=>c=>`bitsmap_ini(${a},${b},${c},0)`],
 };
 
 function stringify(term) {
@@ -1371,8 +1376,7 @@ function compile_defs(defs, main, opts) {
       "  function int_neg(i) {",
       "    return i < 0n ? -i : 0n;",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   }
 
   if (used_prim_types["U8"]) {
@@ -1392,8 +1396,7 @@ function compile_defs(defs, main, opts) {
       "    };",
       "    return w;",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   }
 
   if (used_prim_types["U16"]) {
@@ -1421,8 +1424,7 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return s;",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   }
 
   if (used_prim_types["U32"]) {
@@ -1448,8 +1450,7 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return state;",
       "  };"
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
 
   if (used_prim_types["I32"]) {
@@ -1475,8 +1476,7 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return state;",
       "  };"
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
 
   if (used_prim_types["U64"]) {
@@ -1496,8 +1496,7 @@ function compile_defs(defs, main, opts) {
       "    };",
       "    return w;",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
 
   if (used_prim_types["U128"]) {
@@ -1517,8 +1516,7 @@ function compile_defs(defs, main, opts) {
       "    };",
       "    return w;",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
 
   if (used_prim_types["U256"]) {
@@ -1538,8 +1536,7 @@ function compile_defs(defs, main, opts) {
       "    };",
       "    return w;",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
 
   if (used_prim_types["F64"]) {
@@ -1581,8 +1578,7 @@ function compile_defs(defs, main, opts) {
       "  function f64_make(s, a, b) {",
       "    return (s ? 1 : -1) * Number(a) / 10 ** Number(b);",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
 
   if (used_prim_types["Buffer32"]) {
@@ -1612,9 +1608,56 @@ function compile_defs(defs, main, opts) {
       "  function buffer32_to_depth(b) {",
       "    return BigInt(Math.log(b.length) / Math.log(2));",
       "  };",
-      ].join("\n");
-    code += "\n";
+      ].join("\n")+"\n";
   };
+
+  if ( used_prim_funcs["BitsMap.set"]
+    || used_prim_funcs["BitsMap.get"]
+    || used_prim_funcs["BitsMap.del"]
+    || used_prim_funcs["BitsMap.ini"]) {
+    code += [
+      "  var bitsmap_new = {_: 'BitsMap.new'};",
+      "  var bitsmap_tie = function(val, lft, rgt) {",
+      "    return {_: 'BitsMap.tip', val, lft, rgt};",
+      "  }",
+      "  var maybe_none = {_: 'Maybe.none'};",
+      "  var maybe_some = function(value) {",
+      "    return {_: 'Maybe.some', value};",
+      "  }",
+      "  var bitsmap_get = function(bits, map) {",
+      "    for (var i = bits.length - 1; i >= 0; --i) {",
+      "      if (map._ !== 'BitsMap.new') {",
+      "        map = bits[i] === '0' ? map.lft : map.rgt;",
+      "      }",
+      "    }",
+      "    return map._ === 'BitsMap.new' ? maybe_none : map.val;",
+      "  }",
+      "  var bitsmap_set = function(bits, val, map, overwrite) {",
+      "    var res = {value: map};",
+      "    var key = 'value';",
+      "    var obj = res;",
+      "    for (var i = bits.length - 1; i >= 0; --i) {",
+      "      var map = obj[key];",
+      "      if (map._ === 'BitsMap.new') {",
+      "        obj[key] = {_: 'BitsMap.tie', val: maybe_none, lft: bitsmap_new, rgt: bitsmap_new};",
+      "      } else {",
+      "        obj[key] = {_: 'BitsMap.tie', val: map.val, lft: map.lft, rgt: map.rgt};",
+      "      }",
+      "      obj = obj[key];",
+      "      key = bits[i] === '0' ? 'lft' : 'rgt';",
+      "    }",
+      "    var map = obj[key];",
+      "    if (map._ === 'BitsMap.new') {",
+      "      var x = val === null ? maybe_none : {_: 'Maybe.some', value: val};",
+      "      obj[key] = {_: 'BitsMap.tie', val: x, lft: bitsmap_new, rgt: bitsmap_new};",
+      "    } else {",
+      "      var x = val === null ? maybe_none : overwrite ? {_: 'Maybe.some', value: val} : map.val;",
+      "      obj[key] = {_: 'BitsMap.tie', val: x, lft: map.lft, rgt: map.rgt};",
+      "    }",
+      "    return res.value;",
+      "  };",
+    ].join("\n")+"\n";
+  }
 
   if (used_prim_funcs["List.for"]) {
     code += [
@@ -1625,7 +1668,7 @@ function compile_defs(defs, main, opts) {
       "    }",
       "    return nil;",
       "  };",
-    ].join("\n");
+    ].join("\n")+"\n";
   }
 
   if (used_prim_funcs["List.length"]) {
@@ -1638,7 +1681,7 @@ function compile_defs(defs, main, opts) {
       "    };",
       "    return BigInt(len);",
       "  };",
-    ].join("\n");
+    ].join("\n")+"\n";
   }
 
   if (used_prim_funcs["Nat.to_bits"]) {
