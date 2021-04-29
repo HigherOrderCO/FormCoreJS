@@ -1813,7 +1813,7 @@ function compile_defs(defs, main, opts) {
     code += "          let data = '';\n";
     code += "          r.on('data', chunk => { data += chunk; });\n";
     code += "          r.on('end', () => res(data));\n";
-    code += "        }).on('error', e => res(""));\n";
+    code += "        }).on('error', e => res(''));\n";
     code += "      });\n";
     code += "    } else {\n";
     code += "      return fetch(param).then(res => res.text()).catch(e => '');\n";
