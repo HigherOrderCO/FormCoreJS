@@ -1772,7 +1772,7 @@ function compile_defs(defs, main, opts) {
     code += "      var ht = null;\n";
     code += "      var hs = null;\n";
     code += "    };\n";
-    code += "    return run_io({rl,fs,pc},p).then((x) => { rl.close(); return x; }).catch((e) => { rl.close(); throw e; });\n";
+    code += "    return run_io({rl,fs,pc,ht,hs},p).then((x) => { rl.close(); return x; }).catch((e) => { rl.close(); throw e; });\n";
     code += "  };\n";
     code += "  var set_file = (lib, param) => {\n";
     code += "    var path = '';\n"
