@@ -185,6 +185,9 @@ var prim_funcs = {
   "Int.mul"           : [2, a=>b=>`${a}*${b}`],
   "Int.div"           : [2, a=>b=>`${a}/${b}`],
   "Int.pow"           : [2, a=>b=>`${a}**${b}`],
+  "Int.to_i8"         : [1, a=>`Number(${a})`],
+  "Int.to_i16"        : [1, a=>`Number(${a})`],
+  "Int.to_i32"        : [1, a=>`Number(${a})`],
 
   "U8.add"           : [2, a=>b=>`(${a}+${b})&0xFF`],
   "U8.and"           : [2, a=>b=>`${a}&${b}`],
