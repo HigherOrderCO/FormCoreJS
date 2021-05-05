@@ -188,6 +188,7 @@ var prim_funcs = {
   "Int.to_i8"         : [1, a=>`Number(${a})`],
   "Int.to_i16"        : [1, a=>`Number(${a})`],
   "Int.to_i32"        : [1, a=>`Number(${a})`],
+  "Int.from_nat"      : [1, a=>`${a}`],
 
   "U8.add"           : [2, a=>b=>`(${a}+${b})&0xFF`],
   "U8.and"           : [2, a=>b=>`${a}&${b}`],
