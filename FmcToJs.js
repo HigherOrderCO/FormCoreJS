@@ -1891,7 +1891,7 @@ function compile_defs(defs, main, opts) {
     code += "    },\n";
     code += "    get_line: async (lib, param) => {\n";
     code += "      return await new Promise((res,err) => {\n";
-    code += "        lib.rl.question(p.param, (line) => res(line));\n";
+    code += "        lib.rl.question(param, (line) => res(line));\n";
     code += "      });\n";
     code += "    },\n";
     code += "    get_args: async (lib, param) => {\n";
