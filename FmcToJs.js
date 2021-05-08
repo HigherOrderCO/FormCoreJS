@@ -861,7 +861,7 @@ function application(func, name, allow_empty = false) {
     } else if (func.name === "Nat.to_i32" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(Number(args[0].natx)));
     } else if (func.name === "F64.parse" && args.length === 1 && args[0].ctor === "Str") {
-      return returner(name, args[0].strx);
+      return returner(name, "("+args[0].strx+")");
     } else if ( func.name === "Nat.to_f64"
             && args.length === 3
             && args[0].ctor === "Ref"
