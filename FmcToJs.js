@@ -176,8 +176,8 @@ var prim_funcs = {
   "Nat.to_u128"       : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "Nat.to_u256"       : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "Nat.to_i32"        : [1, a=>`Number(${a})`],
-  "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
   "Nat.to_int"        : [1, a=>`${a}`],
+  "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
   "Nat.read"          : [1, a=>`BigInt(${a})`],
 
   "Int.new"           : [2, a=>b=>a+"-"+b],
@@ -322,7 +322,7 @@ var prim_funcs = {
   "U256.to_nat"        : [1, a=>`${a}`],
   "U256.xor"           : [2, a=>b=>`${a}^${b}`],
   "U256.read"          : [1, a=>`BigInt(${a})`],
-  "U256.from_nat"     : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
+  "U256.from_nat"      : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
 
   "I32.add"           : [2, a=>b=>`(${a}+${b})>>0`],
   "I32.sub"           : [2, a=>b=>`(${a}-${b})>>0`],
@@ -347,7 +347,7 @@ var prim_funcs = {
   "I32.for"           : [4, a=>b=>c=>d=>`i32_for(${a},${b},${c},${d})`],
   "I32.to_f64"        : [1, a=>`${a}`],
   "I32.read"          : [1, a=>`parseInt(${a})`],
-  "I32.from_nat"      : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
+  "I32.from_nat"      : [1, a=>`Number(${a})`],
 
   "F64.add"           : [2, a=>b=>`${a}+${b}`],
   "F64.sub"           : [2, a=>b=>`${a}-${b}`],
