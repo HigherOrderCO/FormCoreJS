@@ -178,6 +178,7 @@ var prim_funcs = {
   "Nat.to_i32"        : [1, a=>b=>`(${a}?1:-1)*Number(${b})`],
   "Nat.to_f64"        : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
+  "Nat.to_int"        : [1, a=>`${a}`],
   "Nat.read"          : [1, a=>`BigInt(${a})`],
 
   "Int.new"           : [2, a=>b=>a+"-"+b],
