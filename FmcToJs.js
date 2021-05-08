@@ -175,8 +175,7 @@ var prim_funcs = {
   "Nat.to_u64"        : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFn`],
   "Nat.to_u128"       : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "Nat.to_u256"       : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "Nat.to_i32"        : [1, a=>b=>`(${a}?1:-1)*Number(${b})`],
-  "Nat.to_f64"        : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
+  "Nat.to_i32"        : [1, a=>`Number(${a})`],
   "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
   "Nat.to_int"        : [1, a=>`${a}`],
   "Nat.read"          : [1, a=>`BigInt(${a})`],
@@ -218,6 +217,7 @@ var prim_funcs = {
   "U8.to_nat"        : [1, a=>`BigInt(${a})`],
   "U8.xor"           : [2, a=>b=>`${a}^${b}`],
   "U8.read"          : [1, a=>`parseInt(${a})`],
+  "U8.from_nat"      : [1, a=>`Number(${a})&0xFF`],
 
   "U16.add"           : [2, a=>b=>`(${a}+${b})&0xFFFF`],
   "U16.and"           : [2, a=>b=>`${a}&${b}`],
@@ -245,6 +245,7 @@ var prim_funcs = {
   "U16.xor"           : [2, a=>b=>`${a}^${b}`],
   "U16.to_bits"       : [1, a=>`u16_to_bits(${a})`],
   "U16.read"          : [1, a=>`parseInt(${a})`],
+  "U16.from_nat"      : [1, a=>`Number(${a})&0xFFFF`],
 
   "U32.add"           : [2, a=>b=>`(${a}+${b})>>>0`],
   "U32.and"           : [2, a=>b=>`${a}&${b}`],
@@ -273,6 +274,7 @@ var prim_funcs = {
   "U32.to_nat"        : [1, a=>`BigInt(${a})`],
   "U32.xor"           : [2, a=>b=>`${a}^${b}`],
   "U32.read"          : [1, a=>`parseInt(${a})`],
+  "U32.from_nat"      : [1, a=>`Number(${a})>>>0`],
 
   "U64.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.and"           : [2, a=>b=>`${a}&${b}`],
@@ -296,6 +298,7 @@ var prim_funcs = {
   "U64.to_nat"        : [1, a=>`${a}`],
   "U64.xor"           : [2, a=>b=>`${a}^${b}`],
   "U64.read"          : [1, a=>`BigInt(${a})`],
+  "U64.from_nat"      : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFn`],
 
   "U256.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.and"           : [2, a=>b=>`${a}&${b}`],
@@ -319,6 +322,7 @@ var prim_funcs = {
   "U256.to_nat"        : [1, a=>`${a}`],
   "U256.xor"           : [2, a=>b=>`${a}^${b}`],
   "U256.read"          : [1, a=>`BigInt(${a})`],
+  "U256.from_nat"     : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
 
   "I32.add"           : [2, a=>b=>`(${a}+${b})>>0`],
   "I32.sub"           : [2, a=>b=>`(${a}-${b})>>0`],
@@ -343,6 +347,7 @@ var prim_funcs = {
   "I32.for"           : [4, a=>b=>c=>d=>`i32_for(${a},${b},${c},${d})`],
   "I32.to_f64"        : [1, a=>`${a}`],
   "I32.read"          : [1, a=>`parseInt(${a})`],
+  "I32.from_nat"      : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
 
   "F64.add"           : [2, a=>b=>`${a}+${b}`],
   "F64.sub"           : [2, a=>b=>`${a}-${b}`],
@@ -363,6 +368,8 @@ var prim_funcs = {
   "F64.to_i32"        : [1, a=>`(${a}>>0)`],
   "F64.parse"         : [1, a=>`parseFloat(${a})`],
   "F64.read"          : [1, a=>`parseFloat(${a})`],
+  "F64.make"          : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
+  "F64.from_nat"      : [1, a=>`Number(${a})`],
 
   "Buffer32.set"      : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer32.get"      : [2, a=>b=>`(${b}[${a}])`],
@@ -836,25 +843,31 @@ function application(func, name, allow_empty = false) {
 
   // Primitive function application
   if (func && func.ctor === "Ref" && prim_funcs[func.name]) {
-    if (func.name === "Nat.to_u8" && args.length === 1 && args[0].ctor === "Nat") {
+    if ((func.name === "Nat.to_u8" || func.name === "U8.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(Number(args[0].natx)));
-    } else if (func.name === "Nat.to_u16" && args.length === 1 && args[0].ctor === "Nat") {
+    } else if ((func.name === "Nat.to_u16" || func.name === "U16.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(Number(args[0].natx)));
-    } else if (func.name === "Nat.to_u32" && args.length === 1 && args[0].ctor === "Nat") {
+    } else if ((func.name === "Nat.to_u32" || func.name === "U32.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(Number(args[0].natx)));
-    } else if (func.name === "Nat.to_u64" && args.length === 1 && args[0].ctor === "Nat") {
+    } else if ((func.name === "Nat.to_u64" || func.name === "U64.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
-    } else if (func.name === "Nat.to_u128" && args.length === 1 && args[0].ctor === "Nat") {
+    } else if ((func.name === "Nat.to_u128" || func.name === "U128.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
-    } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
+    } else if ((func.name === "Nat.to_u256" || func.name === "U256.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
-    } else if (func.name === "Nat.to_i32"
-            && args.length === 2
-            && args[0].ctor === "Ref"
-            && (args[0].name === "Bool.true" || args[0].name === "Bool.false")
-            && args[1].ctor === "Nat") {
-      return returner(name, (args[0].name === "Bool.false" ? "-" : "") + String(Number(args[1].natx)));
-    } else if ( func.name === "Nat.to_f64"
+    } else if ((func.name === "Nat.to_i8" || func.name === "I8.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx));
+    } else if ((func.name === "Nat.to_i16" || func.name === "I16.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx));
+    } else if ((func.name === "Nat.to_i32" || func.name === "I32.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx));
+    } else if ((func.name === "Nat.to_i64" || func.name === "I64.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx)+"n");
+    } else if ((func.name === "Nat.to_i128" || func.name === "I128.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx)+"n");
+    } else if ((func.name === "Nat.to_i256" || func.name === "I256.from_nat") && args.length === 1 && args[0].ctor === "Nat") {
+      return returner(name, String(args[0].natx)+"n");
+    } else if ( func.name === "F64.make"
             && args.length === 3
             && args[0].ctor === "Ref"
             && ( args[0].name === "Bool.true"
@@ -867,7 +880,7 @@ function application(func, name, allow_empty = false) {
         str = "0" + str;
       }
       var str = str.slice(0, -mag) + "." + str.slice(-mag);
-      return returnet(name, (args[0].name === "Bool.false" ? "-" : "") + str);
+      return returner(name, (args[0].name === "Bool.false" ? "-" : "") + str);
     } else if (( func.name === "F64.parse"
               || func.name === "F64.read"
               || func.name === "I8.read"
