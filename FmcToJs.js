@@ -175,7 +175,7 @@ var prim_funcs = {
   "Nat.to_u64"        : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFn`],
   "Nat.to_u128"       : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "Nat.to_u256"       : [1, a=>`${a}&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "Nat.to_i32"        : [1, a=>`Number(${a})`],
+  "Nat.to_i32"        : [1, a=>b=>`(${a}?1:-1)*Number(${b})`],
   "Nat.to_f64"        : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
 
@@ -858,10 +858,14 @@ function application(func, name, allow_empty = false) {
       return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
-    } else if (func.name === "Nat.to_i32" && args.length === 1 && args[0].ctor === "Nat") {
-      return returner(name, String(Number(args[0].natx)));
     } else if (func.name === "F64.parse" && args.length === 1 && args[0].ctor === "Str") {
       return returner(name, "("+args[0].strx+")");
+    } else if (func.name === "Nat.to_i32"
+            && args.length === 2
+            && args[0].ctor === "Ref"
+            && (args[0].name === "Bool.true" || args[0].name === "Bool.false")
+            && args[1].ctor === "Nat") {
+      return returner(name, (args[0].name === "Bool.false" ? "-" : "") + String(Number(args[1].natx)));
     } else if ( func.name === "Nat.to_f64"
             && args.length === 3
             && args[0].ctor === "Ref"
