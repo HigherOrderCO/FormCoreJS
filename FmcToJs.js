@@ -178,6 +178,7 @@ var prim_funcs = {
   "Nat.to_i32"        : [1, a=>b=>`(${a}?1:-1)*Number(${b})`],
   "Nat.to_f64"        : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "Nat.to_bits"       : [1, a=>`nat_to_bits(${a})`],
+  "Nat.read"          : [1, a=>`BigInt(${a})`],
 
   "Int.new"           : [2, a=>b=>a+"-"+b],
   "Int.add"           : [2, a=>b=>`${a}+${b}`],
@@ -189,6 +190,7 @@ var prim_funcs = {
   "Int.to_i16"        : [1, a=>`Number(${a})`],
   "Int.to_i32"        : [1, a=>`Number(${a})`],
   "Int.from_nat"      : [1, a=>`${a}`],
+  "Int.read"          : [1, a=>`BigInt(${a})`],
 
   "U8.add"           : [2, a=>b=>`(${a}+${b})&0xFF`],
   "U8.and"           : [2, a=>b=>`${a}&${b}`],
@@ -214,6 +216,7 @@ var prim_funcs = {
   "U8.to_f64"        : [1, a=>`${a}`],
   "U8.to_nat"        : [1, a=>`BigInt(${a})`],
   "U8.xor"           : [2, a=>b=>`${a}^${b}`],
+  "U8.read"          : [1, a=>`parseInt(${a})`],
 
   "U16.add"           : [2, a=>b=>`(${a}+${b})&0xFFFF`],
   "U16.and"           : [2, a=>b=>`${a}&${b}`],
@@ -240,6 +243,7 @@ var prim_funcs = {
   "U16.to_nat"        : [1, a=>`BigInt(${a})`],
   "U16.xor"           : [2, a=>b=>`${a}^${b}`],
   "U16.to_bits"       : [1, a=>`u16_to_bits(${a})`],
+  "U16.read"          : [1, a=>`parseInt(${a})`],
 
   "U32.add"           : [2, a=>b=>`(${a}+${b})>>>0`],
   "U32.and"           : [2, a=>b=>`${a}&${b}`],
@@ -267,6 +271,7 @@ var prim_funcs = {
   "U32.to_f64"        : [1, a=>`${a}`],
   "U32.to_nat"        : [1, a=>`BigInt(${a})`],
   "U32.xor"           : [2, a=>b=>`${a}^${b}`],
+  "U32.read"          : [1, a=>`parseInt(${a})`],
 
   "U64.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.and"           : [2, a=>b=>`${a}&${b}`],
@@ -289,28 +294,7 @@ var prim_funcs = {
   "U64.to_f64"        : [1, a=>`${a}`],
   "U64.to_nat"        : [1, a=>`${a}`],
   "U64.xor"           : [2, a=>b=>`${a}^${b}`],
-
-  "U256.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.and"           : [2, a=>b=>`${a}&${b}`],
-  "U256.div"           : [2, a=>b=>`(${a}/${b})>>>0`],
-  "U256.eql"           : [2, a=>b=>`${a}===${b}`],
-  "U256.gte"           : [2, a=>b=>`${a}>=${b}`],
-  "U256.gtn"           : [2, a=>b=>`${a}>${b}`],
-  "U256.inc"           : [1, a=>`(${a}+1)&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.length"        : [1, a=>`(${a}.length)&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.lte"           : [2, a=>b=>`${a}<=${b}`],
-  "U256.ltn"           : [2, a=>b=>`${a}<${b}`],
-  "U256.mod"           : [2, a=>b=>`${a}%${b}`],
-  "U256.mul"           : [2, a=>b=>`(${a}*${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.or"            : [2, a=>b=>`${a}|${b}`],
-  "U256.pow"           : [2, a=>b=>`(${a}**${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.shl"           : [2, a=>b=>`(${a}<<${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.show"          : [1, a=>`${a}+"#256"`],
-  "U256.shr"           : [2, a=>b=>`${a}>>>${b}`],
-  "U256.sub"           : [2, a=>b=>`(${a}-${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
-  "U256.to_f64"        : [1, a=>`${a}`],
-  "U256.to_nat"        : [1, a=>`${a}`],
-  "U256.xor"           : [2, a=>b=>`${a}^${b}`],
+  "U64.read"          : [1, a=>`BigInt(${a})`],
 
   "U256.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.and"           : [2, a=>b=>`${a}&${b}`],
@@ -333,6 +317,7 @@ var prim_funcs = {
   "U256.to_f64"        : [1, a=>`${a}`],
   "U256.to_nat"        : [1, a=>`${a}`],
   "U256.xor"           : [2, a=>b=>`${a}^${b}`],
+  "U256.read"          : [1, a=>`BigInt(${a})`],
 
   "I32.add"           : [2, a=>b=>`(${a}+${b})>>0`],
   "I32.sub"           : [2, a=>b=>`(${a}-${b})>>0`],
@@ -356,6 +341,7 @@ var prim_funcs = {
   "I32.length"        : [1, a=>`${a}.length`],
   "I32.for"           : [4, a=>b=>c=>d=>`i32_for(${a},${b},${c},${d})`],
   "I32.to_f64"        : [1, a=>`${a}`],
+  "I32.read"          : [1, a=>`parseInt(${a})`],
 
   "F64.add"           : [2, a=>b=>`${a}+${b}`],
   "F64.sub"           : [2, a=>b=>`${a}-${b}`],
@@ -364,6 +350,7 @@ var prim_funcs = {
   "F64.mod"           : [2, a=>b=>`${a}%${b}`],
   "F64.pow"           : [2, a=>b=>`${a}**${b}`],
   "F64.parse"         : [1, a=>`parseFloat(${a})`],
+  "F64.read"          : [1, a=>`parseFloat(${a})`],
   "F64.log"           : [1, a=>`Math.log(${a})`],
   "F64.cos"           : [1, a=>`Math.cos(${a})`],
   "F64.sin"           : [1, a=>`Math.sin(${a})`],
@@ -373,6 +360,8 @@ var prim_funcs = {
   "F64.atan"          : [1, a=>`Math.atan(${a})`],
   "F64.to_u32"        : [1, a=>`(${a}>>>0)`],
   "F64.to_i32"        : [1, a=>`(${a}>>0)`],
+  "F64.parse"         : [1, a=>`parseFloat(${a})`],
+  "F64.read"          : [1, a=>`parseFloat(${a})`],
 
   "Buffer32.set"      : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer32.get"      : [2, a=>b=>`(${b}[${a}])`],
@@ -858,8 +847,6 @@ function application(func, name, allow_empty = false) {
       return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_u256" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(args[0].natx)+"n");
-    } else if (func.name === "F64.parse" && args.length === 1 && args[0].ctor === "Str") {
-      return returner(name, "("+args[0].strx+")");
     } else if (func.name === "Nat.to_i32"
             && args.length === 2
             && args[0].ctor === "Ref"
@@ -880,6 +867,28 @@ function application(func, name, allow_empty = false) {
       }
       var str = str.slice(0, -mag) + "." + str.slice(-mag);
       return returnet(name, (args[0].name === "Bool.false" ? "-" : "") + str);
+    } else if (( func.name === "F64.parse"
+              || func.name === "F64.read"
+              || func.name === "I8.read"
+              || func.name === "I16.read"
+              || func.name === "I32.read"
+              || func.name === "U8.read"
+              || func.name === "U16.read"
+              || func.name === "U32.read")
+            && args.length === 1
+            && args[0].ctor === "Str") {
+      return returner(name, "("+args[0].strx+")");
+    } else if (( func.name === "U64.parse"
+              || func.name === "U128.read"
+              || func.name === "U256.read"
+              || func.name === "I64.read"
+              || func.name === "I128.read"
+              || func.name === "I256.read"
+              || func.name === "Nat.read"
+              || func.name === "Int.read")
+            && args.length === 1
+            && args[0].ctor === "Str") {
+      return returner(name, "("+args[0].strx+"n)");
     } else if (func.name === "U32.for"
             && args.length === 4
             && args[3].ctor === "Lam"
