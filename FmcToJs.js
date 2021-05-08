@@ -648,6 +648,7 @@ function check(term, type, defs, ctx = fmc.Nil()) {
       }
       return {comp, type};
     case "Let":
+      //console.log("?????", term.expr);
       var expr_cmp = infer(term.expr, defs, ctx);
       var expr_var = fmc.Ann(true, fmc.Var("_"+term.name, ctx.size+1), expr_cmp.type);
       var body_ctx = fmc.Ext({name:term.name,type:expr_var.type}, ctx);
@@ -859,6 +860,8 @@ function application(func, name, allow_empty = false) {
       return returner(name, String(args[0].natx)+"n");
     } else if (func.name === "Nat.to_i32" && args.length === 1 && args[0].ctor === "Nat") {
       return returner(name, String(Number(args[0].natx)));
+    } else if (func.name === "F64.parse" && args.length === 1 && args[0].ctor === "Str") {
+      return returner(name, args[0].strx);
     } else if ( func.name === "Nat.to_f64"
             && args.length === 3
             && args[0].ctor === "Ref"
