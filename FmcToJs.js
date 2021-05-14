@@ -294,7 +294,7 @@ var prim_funcs = {
   "U64.show"          : [1, a=>`${a}+"#64"`],
   "U64.shr"           : [2, a=>b=>`${a}>>>${b}`],
   "U64.sub"           : [2, a=>b=>`(${a}-${b})&0xFFFFFFFFFFFFFFFFn`],
-  "U64.to_f64"        : [1, a=>`${a}`],
+  "U64.to_f64"        : [1, a=>`Number(${a})`],
   "U64.to_nat"        : [1, a=>`${a}`],
   "U64.xor"           : [2, a=>b=>`${a}^${b}`],
   "U64.read"          : [1, a=>`BigInt(${a})`],
