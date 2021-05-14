@@ -370,6 +370,7 @@ var prim_funcs = {
   "F64.read"          : [1, a=>`parseFloat(${a})`],
   "F64.make"          : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "F64.from_nat"      : [1, a=>`Number(${a})`],
+  "F64.show"          : [1, a=>`String(${a})`],
 
   "Buffer32.set"      : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer32.get"      : [2, a=>b=>`(${b}[${a}])`],
