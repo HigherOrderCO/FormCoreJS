@@ -278,7 +278,7 @@ var prim_funcs = {
 
   "U64.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.and"           : [2, a=>b=>`${a}&${b}`],
-  "U64.div"           : [2, a=>b=>`(${a}/${b})>>>0`],
+  "U64.div"           : [2, a=>b=>`(${a}/${b})&0xFFFFFFFFFFFFFFFFn`],
   "U64.eql"           : [2, a=>b=>`${a}===${b}`],
   "U64.gte"           : [2, a=>b=>`${a}>=${b}`],
   "U64.gtn"           : [2, a=>b=>`${a}>${b}`],
@@ -302,7 +302,7 @@ var prim_funcs = {
 
   "U256.add"           : [2, a=>b=>`(${a}+${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.and"           : [2, a=>b=>`${a}&${b}`],
-  "U256.div"           : [2, a=>b=>`(${a}/${b})>>>0`],
+  "U256.div"           : [2, a=>b=>`(${a}/${b})&0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn`],
   "U256.eql"           : [2, a=>b=>`${a}===${b}`],
   "U256.gte"           : [2, a=>b=>`${a}>=${b}`],
   "U256.gtn"           : [2, a=>b=>`${a}>${b}`],
