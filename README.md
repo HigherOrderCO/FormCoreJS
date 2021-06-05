@@ -1,7 +1,7 @@
 FormCoreJS
 ==========
 
-A pure JavaScript, dependency-free, 700-LOC implementation of FormCore, a minimal proof language featuring inductive reasoning. It is the kernel of [Formality](https://github.com/moonad/formality). It compiles to ultra-fast JavaScript and Haskell. Other back-ends coming soon.
+A pure JavaScript, dependency-free, 700-LOC implementation of FormCore, a minimal proof language featuring inductive reasoning. It is the kernel of [Kind](https://github.com/uwu-tech/Kind). It compiles to ultra-fast JavaScript and Haskell. Other back-ends coming soon.
 
 Usage
 -----
@@ -46,7 +46,7 @@ It has two main uses:
 ### A minimal, auditable proof kernel
 
 Proof assistants are used to verify software correctness, but who verifies the
-verifier? With FormCore, proofs in complex languages like [Formality](https://github.com/moonad/formality)
+verifier? With FormCore, proofs in complex languages like [Kind](https://github.com/uwu-tech/Kind)
 can be compiled to a minimal core and checked again, protecting against bugs on
 the proof language itself. As for FormCore itself, since it is very small, it
 can be audited manually by humans, ending the loop.
@@ -56,7 +56,7 @@ can be audited manually by humans, ending the loop.
 FormCore can be used as an common intermediate format which other functional
 languages can target, in order to be transpiled to other languages. FormCore's
 purity and rich type information allows one to recover efficient programs from
-it. Right now, we use FormCore to compile [Formality](https://github.com/moonad/formality)
+it. Right now, we use FormCore to compile [Kind](https://github.com/uwu-tech/Kind)
 to JavaScript, but other source and target languages could be involved.
 
 The JavaScript Compiler
@@ -67,7 +67,7 @@ JavaScript. That compiler uses type information to convert highly functional
 code into efficient JavaScript. For example, the compiler will convert these
 λ-encodings to native representations:
 
-Formality | JavaScript
+Kind | JavaScript
 --------- | ----------
 Unit      | Number
 Bool      | Bool
@@ -128,7 +128,7 @@ main : Bool =
   (not false);
 ```
 
-It is equivalent to this [Formality](https://github.com/moonad/formality)
+It is equivalent to this [Kind](https://github.com/uwu-tech/Kind)
 snippet:
 
 ```c
