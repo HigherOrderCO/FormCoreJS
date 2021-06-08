@@ -525,7 +525,7 @@ function prim_of(type, defs) {
 // Note:
 // The name of bound variables get a '$depth$' appended to it. This helps making
 // them unique, but also solves some issues where JavaScript shadowing behavior
-// differs from Formality. For example:
+// differs from Kind. For example:
 // `foo = x => y => { var x = x * x; return x; }`
 // Here, calling `foo(2)(2)` would return `NaN`, not `4`, because the outer
 // value of `x` isn't accessible inside the function's body due to the
