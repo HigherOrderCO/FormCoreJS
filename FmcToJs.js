@@ -26,6 +26,7 @@ var is_prim = {
   U256     : 1,
   F64      : 1,
   String   : 1,
+  Buffer8  : 1,
   Buffer32 : 1,
 };
 
@@ -135,6 +136,14 @@ var prim_types = {
       ctor: [[], [x => x+".charCodeAt(0)", x => x+".slice(1)"]],
     },
     cnam: {mode: "if"},
+  },
+  Buffer8: {
+    inst: [[2, d => a => "u8array_to_buffer8("+a+")"]],
+    elim: {
+      ctag: x => "'b8'",
+      ctor: [[x => "buffer8_to_depth("+x+")", x => "buffer8_to_u8array("+x+")"]],
+    },
+    cnam: {mode: "switch", nams: ['b8']},
   },
   Buffer32: {
     inst: [[2, d => a => "u32array_to_buffer32("+a+")"]],
@@ -371,6 +380,10 @@ var prim_funcs = {
   "F64.make"          : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "F64.from_nat"      : [1, a=>`Number(${a})`],
   "F64.show"          : [1, a=>`String(${a})`],
+
+  "Buffer8.set"       : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
+  "Buffer8.get"       : [2, a=>b=>`(${b}[${a}])`],
+  "Buffer8.alloc"     : [1, a=>`new Uint8Array(2 ** Number(${a}))`],
 
   "Buffer32.set"      : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer32.get"      : [2, a=>b=>`(${b}[${a}])`],
@@ -1612,6 +1625,36 @@ function compile_defs(defs, main, opts) {
       "  };",
       "  function f64_make(s, a, b) {",
       "    return (s ? 1 : -1) * Number(a) / 10 ** Number(b);",
+      "  };",
+      ].join("\n")+"\n";
+  };
+
+  if (used_prim_types["Buffer8"]) {
+    code += [
+      "  function u8array_to_buffer8(a) {",
+      "    function go(a, buffer) {",
+      "      switch (a._) {",
+      "        case 'Array.tip': buffer.push(a.value); break;",
+      "        case 'Array.tie': go(a.lft, buffer); go(a.rgt, buffer); break;",
+      "      }",
+      "      return buffer;",
+      "    };",
+      "    return new Uint8Array(go(a, []));",
+      "  };",
+      "  function buffer8_to_u8array(b) {",
+      "    function go(b) {",
+      "      if (b.length === 1) {",
+      "        return {_: 'Array.tip', value: b[0]};",
+      "      } else {",
+      "        var lft = go(b.slice(0,b.length/2));",
+      "        var rgt = go(b.slice(b.length/2));",
+      "        return {_: 'Array.tie', lft, rgt};",
+      "      };",
+      "    };",
+      "    return go(b);",
+      "  };",
+      "  function buffer8_to_depth(b) {",
+      "    return BigInt(Math.log(b.length) / Math.log(2));",
       "  };",
       ].join("\n")+"\n";
   };
