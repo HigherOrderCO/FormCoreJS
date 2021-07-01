@@ -2032,7 +2032,7 @@ function compile_defs(defs, main, opts) {
     code += "    get_time: async (lib, param) => {\n";
     code += "      return String(Date.now());\n";
     code += "    },\n";
-    code += "    random: async (lib, param) => {\n";
+    code += "    get_random: async (lib, param) => {\n";
     code += "      return Math.random();\n";
     code += "    },\n";
     code += "    exit: async (lib, param) => {\n";
