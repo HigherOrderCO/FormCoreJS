@@ -2032,15 +2032,15 @@ function compile_defs(defs, main, opts) {
     code += "    get_time: async (lib, param) => {\n";
     code += "      return String(Date.now());\n";
     code += "    },\n";
+    code += "    random: async (lib, param) => {\n";
+    code += "      return Math.random();\n";
+    code += "    },\n";
     code += "    exit: async (lib, param) => {\n";
     code += "      lib.pc.exit();\n";
     code += "      return '';\n";
     code += "    },\n";
     code += "    request: async (lib, param) => {\n";
     code += "      return request(lib, param);\n";
-    code += "    },\n";
-    code += "    get_time: async (lib, param) => {\n";
-    code += "      return String(Date.now());\n";
     code += "    },\n";
     code += "    get_line: async (lib, param) => {\n";
     code += "      return await new Promise((res,err) => {\n";
