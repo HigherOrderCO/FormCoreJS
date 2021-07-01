@@ -416,6 +416,10 @@ var prim_funcs = {
   "F64.make"          : [3, a=>b=>c=>`f64_make(${a},${b},${c})`],
   "F64.from_nat"      : [1, a=>`Number(${a})`],
   "F64.show"          : [1, a=>`String(${a})`],
+  "F64.round"         : [1, a=>`Math.round(${a})`],
+  "F64.ceil"          : [1, a=>`Math.ceil(${a})`],
+  "F64.sqrt"          : [1, a=>`Math.sqrt(${a})`],
+  "F64.exp"           : [1, a=>`Math.exp(${a})`],
 
   "Buffer8.set"       : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer8.get"       : [2, a=>b=>`(${b}[${a}])`],
