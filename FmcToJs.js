@@ -420,6 +420,11 @@ var prim_funcs = {
   "F64.ceil"          : [1, a=>`Math.ceil(${a})`],
   "F64.sqrt"          : [1, a=>`Math.sqrt(${a})`],
   "F64.exp"           : [1, a=>`Math.exp(${a})`],
+  "F64.ltn"           : [2, a=>b=>`${a}<${b}`],
+  "F64.lte"           : [2, a=>b=>`${a}<=${b}`],
+  "F64.eql"           : [2, a=>b=>`${a}===${b}`],
+  "F64.gte"           : [2, a=>b=>`${a}>=${b}`],
+  "F64.gtn"           : [2, a=>b=>`${a}>${b}`],
 
   "Buffer8.set"       : [3, a=>b=>c=>`(${c}[${a}]=${b},${c})`],
   "Buffer8.get"       : [2, a=>b=>`(${b}[${a}])`],
