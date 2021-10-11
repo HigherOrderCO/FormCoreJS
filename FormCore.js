@@ -44,7 +44,7 @@ function list_find(list, cond, indx = 0, skip = 0) {
 function show_string(str) {
   var out = ""
   for (var i = 0; i < str.length; i++) {
-    if (str[i] == '\\' || str[i] == '"' | str[i] == "'") {
+    if (str[i] == '\\' || str[i] == '"' || str[i] == "'") {
       out += '\\' + str[i];
     } else if (str[i] >= ' ' && str[i] <= `~`) {
       out += str[i];
