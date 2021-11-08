@@ -305,7 +305,7 @@ var prim_funcs = {
   "U32.to_u64"        : [1, a=>`BigInt(${a})`],
   "U32.to_u128"       : [1, a=>`BigInt(${a})`],
   "U32.to_u256"       : [1, a=>`BigInt(${a})`],
-  "U32.xor"           : [2, a=>b=>`${a}^${b}`],
+  "U32.xor"           : [2, a=>b=>`(${a}^${b})>>>0`],
   "U32.read"          : [1, a=>`parseInt(${a})`],
   "U32.from_nat"      : [1, a=>`Number(${a})>>>0`],
 
